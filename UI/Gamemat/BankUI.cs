@@ -19,66 +19,49 @@ public class BankUI : MonoBehaviour
     private ChangeTextGradually changeLightTextGradually;
     private float stardustTimer;
     private float lightTimer;
-    
-
-   
-    
 
     private void Awake()
     {
         Instance = this;
         changeStardustTextGradually = stardustText.GetComponent<ChangeTextGradually>();
         changeLightTextGradually = lightText.GetComponent<ChangeTextGradually>();
-
-
     }
     private void Start()
     {
-        CardGameManager.Instance.OnUpdateBankedStardust += CardGameManager_OnUpdateBankedStardust;
-        CardGameManager.Instance.OnUpdateBankedLight += CardGameManager_OnUpdateBankedLight;
+        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
     }
-    //ugly avoid calling Instance instead call the method in the instance class itself
-    //ugly don't think need re do this can make 2 into 1 methods?
-    private void CardGameManager_OnUpdateBankedLight(object sender, EventArgs e)
+
+    private void CardGameManager_OnBeginMatch(object sender, EventArgs e)
+    {
+        CardGameManager.Instance.GetPlayer().OnSetMyStardust += IPlayer_OnUpdateBankedStardust;
+        CardGameManager.Instance.GetPlayer().OnSetMyLight += IPlayer_OnSetMyLight;
+    }
+
+    private void IPlayer_OnSetMyLight(object sender, EventArgs e)
     {
         int previousLight = Int32.Parse(lightText.text);
-        int lightDiff = 0;
-        int lightValue = 0;
-        
-        if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-        {
-            lightDiff = DivineMultiplayer.Instance.playerOneLight.Value - previousLight;
-            lightValue = DivineMultiplayer.Instance.playerOneLight.Value;
-        }
-        else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-        {
-            lightDiff = DivineMultiplayer.Instance.playerTwoLight.Value - previousLight;
-            lightValue = DivineMultiplayer.Instance.playerTwoLight.Value;
-        }
+        int lightValue = CardGameManager.Instance.GetPlayer().GetLight();
+        int lightDiff = lightValue - previousLight;
 
         if (lightDiff < 0)
         {
             lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * lightDiff / speedUpWhenDecrease);
             changeLightTextGradually.SetText(lightTimer, lightValue);
-            
         }
         else if (lightDiff > 0)
         {
-
             lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(lightDiff);
             changeLightTextGradually.SetText(lightTimer, lightValue);
             GlowLight(lightDiff);
-            
         }
     }
 
-    private void CardGameManager_OnUpdateBankedStardust(object sender, System.EventArgs e)
+    private void IPlayer_OnUpdateBankedStardust(object sender, EventArgs e)
     {
+        //sadly this will activate for both connected plyers when want to activate only for player one
         int previousStardust = Int32.Parse(stardustText.text);
-        int stardust = DivineMultiplayer.Instance.GetStardust();
+        int stardust = CardGameManager.Instance.GetPlayer().GetStardust();
         int stardustDiff = stardust - previousStardust;
-
-       
 
         if (stardustDiff < 0)
         {
@@ -88,11 +71,18 @@ public class BankUI : MonoBehaviour
         }
         else if (stardustDiff > 0)
         {
-            stardustTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff );
+            stardustTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff);
 
             changeStardustTextGradually.SetText(stardustTimer, stardust);
         }
     }
+
+
+    //ugly avoid calling Instance instead call the method in the instance class itself
+    //ugly don't think need re do this can make 2 into 1 methods?
+    
+
+    
 
     public void GlowStardust(int energyGen)
     {

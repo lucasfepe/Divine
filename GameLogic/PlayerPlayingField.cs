@@ -158,16 +158,7 @@ public class PlayerPlayingField : NetworkBehaviour
     }
 
 
-    [ServerRpc(RequireOwnership = false)]
-    private void SetPlayerOneProgressServerRpc(int change)
-    {
-        DivineMultiplayer.Instance.playerOneProgress.Value += change;
-    }
-    [ServerRpc(RequireOwnership = false)]
-    private void SetPlayerTwoProgressServerRpc(int change)
-    {
-        DivineMultiplayer.Instance.playerTwoProgress.Value += change;
-    }
+    
 
     //Will update other player's opponent field
     private void AddToFieldCardList(string cardName)
@@ -193,32 +184,14 @@ public class PlayerPlayingField : NetworkBehaviour
     {
         DivineMultiplayer.Instance.fieldExpertCardsPlayerTwo.Add(cardName);
     }
-    [ServerRpc(RequireOwnership = false)]
-    private void AddToPlayerTwoCivilizationCardListServerRpc(string cardName)
-    {
-        DivineMultiplayer.Instance.fieldCivilizationCardsPlayerTwo.Add(cardName);
-    }
-    [ServerRpc(RequireOwnership = false)]
-    private void SetPlayerTwoSubterfugeCardServerRpc(string cardName)
-    {
-        DivineMultiplayer.Instance.fieldSubterfugeCardPlayerTwo.Value = cardName;
-    }
+   
 
     [ServerRpc(RequireOwnership = false)]
     private void AddToPlayerOneExpertCardListServerRpc(string cardName)
     {
         DivineMultiplayer.Instance.fieldExpertCardsPlayerOne.Add(cardName);
     }
-    [ServerRpc(RequireOwnership = false)]
-    private void AddToPlayerOneCivilizationCardListServerRpc(string cardName)
-    {
-        DivineMultiplayer.Instance.fieldCivilizationCardsPlayerOne.Add(cardName);
-    }
-    [ServerRpc(RequireOwnership = false)]
-    private void SetPlayerOneSubterfugeCardServerRpc(string cardName)
-    {
-        DivineMultiplayer.Instance.fieldSubterfugeCardPlayerOne.Value = cardName;
-    }
+   
 
     public int GetNumberExpertCardsInPlayerField()
     {

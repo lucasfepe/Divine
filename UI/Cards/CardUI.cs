@@ -118,6 +118,7 @@ public class CardUI : MonoBehaviour
             CardGameManager.Instance.DoneSelectingTarget();
         }
     }
+    //ugly  cardUI really shouldn't be concerned with playing the card itself
     virtual protected void CardUI_OnAnyPlayCard(object sender, OnPlayCardEventArgs e)
     {
         if (e.card != card) return;
@@ -144,7 +145,7 @@ public class CardUI : MonoBehaviour
             //very ugly
             transform.parent.GetComponentInChildren<InspectHandUI>().Hide();
             //
-            if (DivineMultiplayer.Instance.GetStardust() >= card.GetStardust() && CardGameManager.Instance.CanPlayExpertCardThisTurn()) { 
+            if (CardGameManager.Instance.GetPlayer().GetStardust() >= card.GetStardust() && CardGameManager.Instance.CanPlayExpertCardThisTurn()) { 
                 PlayerPlayingField.Instance.PlayCard(card);
                 CardGameManager.Instance.PlayCard(card);
                 

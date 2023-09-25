@@ -105,8 +105,7 @@ public class ExpertCard : BaseCard
                 }
                 else {
                     DeadStarBank.Instance.BirthWhiteDwarf();
-                    //ugly do this in DeadStarBank itself
-                    DeadStarBankUI.Instance.UpdateDeadStarBankUI();
+                    
                 Destroy(gameObject);
                 isDestroyed = true;
                 }
@@ -134,7 +133,7 @@ public class ExpertCard : BaseCard
                         }
                     }
                     
-                    DeadStarBankUI.Instance.UpdateDeadStarBankUI();
+                    
                     
                     
                     //int cardIndex = OpponentPlayingField.Instance.GetAllOpponentExpertCards().FindIndex(x => x == targetCard);
@@ -209,7 +208,7 @@ public class ExpertCard : BaseCard
                     if(GetCardLight() <= 0 || GetStardust() <= 0 || lifetime <= 0)
                     {
                         DeadStarBank.Instance.BirthBlackDwarf();
-                        DeadStarBankUI.Instance.UpdateDeadStarBankUI();
+                        
                         Destroy(gameObject);
                         
                     }
@@ -364,20 +363,7 @@ public class ExpertCard : BaseCard
 
     }
 
-    private void Damage(int damage)
-    {
-        health -= damage;
-        //find index of card in any game (mine or opponent)
-        int cardIndex = OpponentPlayingField.Instance.GetAllOpponentExpertCards().FindIndex(x => x == this);
-        //Decrease health of opponent's card in opponent's game
-        DivineMultiplayer.Instance.HealthChangedServerRpc(cardIndex, damage, GetCardOwner());
-
-        if (health <= 0)
-        {
-            Destroy(gameObject);
-        }
-        
-    }
+    
 
     //public ExpertLevel GetExpertLevel()
     //{

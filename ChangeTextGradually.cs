@@ -43,7 +43,6 @@ public class ChangeTextGradually : MonoBehaviour
 
     public void SetText(float duration, int newValue)
     {
-        
         this.newValue = newValue;
         totalTimer = duration;
         value = System.Int32.Parse(text.text);

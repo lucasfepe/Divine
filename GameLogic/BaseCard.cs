@@ -180,8 +180,8 @@ public class BaseCard : MonoBehaviour
         if (isDestroyed) return 0;
         //ParticleSystem particleSystem = GetComponentInChildren<ParticleSystem>();
         //ParticleSystem.Burst burst = particleSystem.emission.GetBurst(0);
-
-        DivineMultiplayer.Instance.IncreaseLight(cardLight);
+        
+        
             //burst.cycleCount = light;
             //particleSystem.emission.SetBurst(0, burst);
             //particleSystem.GetComponent<ParticleSystemRenderer>().material = Materials.Instance.yellowEnergyMaterial;
