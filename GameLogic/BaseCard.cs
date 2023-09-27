@@ -8,6 +8,8 @@ using UnityEngine;
 
 public class BaseCard : MonoBehaviour
 {
+    //how do I keep track of this card's stardust and light with a network variable in case a player disconnects 
+    //if I make is a network Behaviour it will make two of it, can I have two of it but in different places in the two different players??
     //public event EventHandler<OnCardHoverEventArgs> OnCardHover;
     public event EventHandler OnCardHoverEnter;
     public event EventHandler OnCardHoverExit;
@@ -23,7 +25,7 @@ public class BaseCard : MonoBehaviour
     private bool isPacified = false;
     protected Transform previousParent;
     protected RectTransform rectTransform;
-    private int stardust;
+    private int cardStardust;
     private int cardLight;
 
     
@@ -35,6 +37,14 @@ public class BaseCard : MonoBehaviour
     //{
     //    public Card hoveredCard;
     //}
+    virtual public void BlackHoleApproach()
+    {
+
+    }
+    virtual public void StrangeMatterEffect()
+    {
+
+    }
     virtual protected void Awake()
     {
         
@@ -120,7 +130,7 @@ public class BaseCard : MonoBehaviour
     virtual public void SetCardSO(CardSO cardSO)
     {
         this.cardSO = cardSO;
-        stardust = cardSO.Stardust;
+        cardStardust = cardSO.Stardust;
         cardLight = cardSO.Light;
     }
     public CardSO GetCardSO()
@@ -222,24 +232,24 @@ public class BaseCard : MonoBehaviour
     }
     public int GetStardust()
     {
-        return stardust;
+        return cardStardust;
     }
     public void IncrementCardStardust(int value)
     {
-         stardust += value;
+         cardStardust += value;
         //update the uiSetStardustText
         cardUI.RefreshStardustText();
         if (cardOwner == Player.Instance.IAm())
         {
             //update other player
-            DivineMultiplayer.Instance.UpdateCardStardustInOpponentFieldServerRpc(GetIndex(), stardust, Player.Instance.OpponentIs());
+            DivineMultiplayer.Instance.UpdateCardStardustInOpponentFieldServerRpc(GetIndex(), cardStardust, Player.Instance.OpponentIs());
         }
         
     }
     //ugly warning if use this ineaset of increment/decrement opponent won't be updated
     public void SetCardStardust(int value)
     {
-        stardust = value;
+        cardStardust = value;
         cardUI.RefreshStardustText();
     }
 
@@ -251,12 +261,12 @@ public class BaseCard : MonoBehaviour
 
     public void DecreaseCardStardust()
     {
-        stardust--;
+        cardStardust--;
         cardUI.RefreshStardustText();
         if (cardOwner == Player.Instance.IAm())
         {
             //update other player
-            DivineMultiplayer.Instance.UpdateCardStardustInOpponentFieldServerRpc(GetIndex(), stardust, Player.Instance.OpponentIs());
+            DivineMultiplayer.Instance.UpdateCardStardustInOpponentFieldServerRpc(GetIndex(), cardStardust, Player.Instance.OpponentIs());
         }
         //update other player
     }

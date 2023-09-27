@@ -201,17 +201,7 @@ public class ExpertCard : BaseCard
                 //            statusesToRemove.Add(status);
                 //            break;
                 case EffectTypeEnum.Strange:
-                    DecreaseCardLight();
-                    DecreaseCardStardust();
-                    //lifetime -= 1;
-                    cardUI.RefreshUI();
-                    if(GetCardLight() <= 0 || GetStardust() <= 0 || lifetime <= 0)
-                    {
-                        DeadStarBank.Instance.BirthBlackDwarf();
-                        
-                        Destroy(gameObject);
-                        
-                    }
+                    StrangeMatterEffect();
                     //((ExpertCardUI)cardUI).RefreshExperience();
                     //Remove this status
                     //GetComponentInChildren<StatusIconsUI>().RemoveStatusIcon(index);
@@ -224,7 +214,32 @@ public class ExpertCard : BaseCard
         ////need this as removing inside loop causes error
         //statusList.RemoveAll(x => statusesToRemove.Contains(x));
     }
+    override public void StrangeMatterEffect()
+    {
+        DecreaseCardLight();
+        DecreaseCardStardust();
+        //lifetime -= 1;
+        if (GetCardLight() <= 0 || GetStardust() <= 0 || lifetime <= 0)
+        {
+            DeadStarBank.Instance.BirthBlackDwarf();
 
+            Destroy(gameObject);
+
+        }
+    }
+    override public void BlackHoleApproach()
+    {
+        DecreaseCardLight();
+        DecreaseCardStardust();
+        //lifetime -= 1;
+
+        if (GetCardLight() <= 0 || GetStardust() <= 0)
+        {
+            DeadStarBank.Instance.BirthBlackDwarf();
+            //DeadStarBankUI.Instance.UpdateDeadStarBankUI();
+            Destroy(gameObject);
+        }
+    }
     public int GetLifetime()
     {
         return lifetime;

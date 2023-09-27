@@ -9,6 +9,7 @@ public class PlayerOne : NetworkBehaviour, IPlayer
 {
     //ugly do i really nee "One" in all of these?
     //can I have two network variables in two separate classes with the same name?
+    
     public NetworkVariable<int> playerOneStardust = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerOneLight = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerOneBlackDwarf = new NetworkVariable<int>(0);
@@ -92,6 +93,7 @@ public class PlayerOne : NetworkBehaviour, IPlayer
     }
 
     //ugly this is literally duplicated in playerTwo
+    //but like you need it in both places so idk
     public void SetStardust(int newValue)
     {
         SetStardustServerRpc(newValue);

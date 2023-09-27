@@ -120,7 +120,6 @@ public class CardGameManager : NetworkBehaviour
         OnBeginTurn?.Invoke(this, EventArgs.Empty);
         OnBeginTurnStep2?.Invoke(this, EventArgs.Empty);
         int stardustPerTurn = 5;
-        //ugly is there no centralized way to do this
         player.SetStardust(player.GetStardust() + stardustPerTurn + stardustFromSupernova);
         
         BankUI.Instance.GlowStardust(stardustPerTurn + stardustFromSupernova);

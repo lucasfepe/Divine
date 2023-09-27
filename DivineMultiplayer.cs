@@ -10,6 +10,7 @@ using UnityEngine;
 public class DivineMultiplayer : NetworkBehaviour
 {
     //ugly perhaps it would be better to split this class into the classes that it affects...
+    //getting there
     public static DivineMultiplayer Instance { get; private set; }
     public NetworkVariable<bool> isPlayerOneReady = new NetworkVariable<bool>(false);
     public NetworkVariable<bool> isPlayerTwoReady = new NetworkVariable<bool>(false);
@@ -17,21 +18,7 @@ public class DivineMultiplayer : NetworkBehaviour
     public NetworkVariable<int> playerTwoDeckCards = new NetworkVariable<int>(-1);
     public NetworkVariable<int> playerOneHandCards = new NetworkVariable<int>(-1);
     public NetworkVariable<int> playerTwoHandCards = new NetworkVariable<int>(-1);
-    //public NetworkVariable<int> playerOneProgress = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerTwoProgress = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerOneLight = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerTwoLight = new NetworkVariable<int>(0);
-
-    //public NetworkVariable<int> playerTwoStardust = new NetworkVariable<int>(0);
-
-    //public NetworkVariable<int> playerOneBlackHole = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerTwoBlackHole = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerOneNeutronStar = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerTwoNeutronStar = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerOneWhiteDwarf = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerTwoWhiteDwarf = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerOneBlackDwarf = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> playerTwoBlackDwarf = new NetworkVariable<int>(0);
+   
 
     public NetworkList<FixedString64Bytes> fieldExpertCardsPlayerOne;
     public NetworkList<FixedString64Bytes> fieldExpertCardsPlayerTwo;
@@ -65,16 +52,12 @@ public class DivineMultiplayer : NetworkBehaviour
         Instance = this;
         fieldExpertCardsPlayerOne = new NetworkList<FixedString64Bytes>();
         fieldExpertCardsPlayerTwo = new NetworkList<FixedString64Bytes>();
-        //fieldCivilizationCardsPlayerOne = new NetworkList<FixedString64Bytes>();
-        //fieldCivilizationCardsPlayerTwo = new NetworkList<FixedString64Bytes>();
+      
     }
    
     public override void OnNetworkSpawn()
     {
-        //playerOneLight.OnValueChanged += PlayerOneLight_OnValueChanged;
-        //playerTwoLight.OnValueChanged += PlayerTwoLight_OnValueChanged;
-        
-        //playerTwoStardust.OnValueChanged += PlayerTwoStardust_OnValueChanged;
+       
         playerOneDeckCards.OnValueChanged += PlayerOneDeckCards_OnValueChanged;
         playerTwoDeckCards.OnValueChanged += PlayerTwoDeckCards_OnValueChanged;
         playerOneHandCards.OnValueChanged += PlayerOneHandCards_OnValueChanged;
@@ -85,280 +68,10 @@ public class DivineMultiplayer : NetworkBehaviour
         isPlayerOneReady.OnValueChanged += PlayersReady_OnValueChanged;
         isPlayerTwoReady.OnValueChanged += PlayersReady_OnValueChanged;
 
-        //playerOneBlackHole.OnValueChanged += DeadStarP1_OnValueChanged;
-        //playerTwoBlackHole.OnValueChanged += DeadStarP2_OnValueChanged;
-        //playerOneNeutronStar.OnValueChanged += DeadStarP1_OnValueChanged;
-        //playerTwoNeutronStar.OnValueChanged += DeadStarP2_OnValueChanged;
-        //playerOneWhiteDwarf.OnValueChanged += DeadStarP1_OnValueChanged;
-        //playerTwoWhiteDwarf.OnValueChanged += DeadStarP2_OnValueChanged;
-        //playerOneBlackDwarf.OnValueChanged += DeadStarP1_OnValueChanged;
-        //playerTwoBlackDwarf.OnValueChanged += DeadStarP2_OnValueChanged;
-
-        //if this is the second player to spawn will want 
+        
     }
 
-    //may want to split this up into 8 so that don't update every value on every value change
-    //but probably fine
-    //private void DeadStarP1_OnValueChanged(int previousValue, int newValue)
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        DeadStarBankUI.Instance.UpdateDeadStarBankUI();
-    //    }
-    //    else if (Player.Instance.OpponentIs() == PlayerEnum.PlayerOne)
-    //    {
-    //        DeadStarServerRpc(PlayerEnum.PlayerOne);
-    //    }
-    //}
-    //private void DeadStarP2_OnValueChanged(int previousValue, int newValue)
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        DeadStarBankUI.Instance.UpdateDeadStarBankUI();
-    //    }
-    //    else if (Player.Instance.OpponentIs() == PlayerEnum.PlayerTwo)
-    //    {
-    //        DeadStarServerRpc(PlayerEnum.PlayerTwo);
-    //    }
-    //}
-
-    //[ServerRpc(RequireOwnership = false)]
-    //private void DeadStarServerRpc(PlayerEnum player)
-    //{
-    //    DeadStarClientRpc(player);
-    //}
-    //[ClientRpc]
-    //private void DeadStarClientRpc(PlayerEnum player)
-    //{
-    //    if (Player.Instance.OpponentIs() == player)
-    //    {
-    //        OpponentDeadStarBankUI.Instance.UpdateDeadStarBankUI();
-    //    }
-       
-    //}
-
-    //public void IncreaseBlackHoleCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetBlackHoleCountServerRpc(PlayerEnum.PlayerOne, playerOneBlackHole.Value + 1);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetBlackHoleCountServerRpc(PlayerEnum.PlayerTwo, playerTwoBlackHole.Value + 1);
-    //    }
-    //}
-
-    //[ServerRpc(RequireOwnership =false)]
-    //private void SetBlackHoleCountServerRpc(PlayerEnum player, int value)
-    //{
-    //    if (player == PlayerEnum.PlayerOne)
-    //    {
-    //        playerOneBlackHole.Value = value;
-    //    }
-    //    else if (player == PlayerEnum.PlayerTwo)
-    //    {
-    //        playerTwoBlackHole.Value = value;
-    //    }
-    //}
-    //public void IncreaseNeutronStarCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetNeutronStarCountServerRpc(PlayerEnum.PlayerOne, playerOneNeutronStar.Value + 1);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetNeutronStarCountServerRpc(PlayerEnum.PlayerTwo, playerTwoNeutronStar.Value + 1);
-    //    }
-    //}
-    //public void DecreaseNeutronStarCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetNeutronStarCountServerRpc(PlayerEnum.PlayerOne, playerOneNeutronStar.Value - 1);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetNeutronStarCountServerRpc(PlayerEnum.PlayerTwo, playerTwoNeutronStar.Value - 1);
-    //    }
-    //}
-
-    //[ServerRpc(RequireOwnership = false)]
-    //private void SetNeutronStarCountServerRpc(PlayerEnum player, int value)
-    //{
-    //    if (player == PlayerEnum.PlayerOne)
-    //    {
-    //        playerOneNeutronStar.Value = value;
-    //    }
-    //    else if (player == PlayerEnum.PlayerTwo)
-    //    {
-    //        playerTwoNeutronStar.Value = value;
-    //    }
-    //}
-    //public void IncreaseWhiteDwarfCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetWhiteDwarfCountServerRpc(PlayerEnum.PlayerOne, playerOneWhiteDwarf.Value + 1);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetWhiteDwarfCountServerRpc(PlayerEnum.PlayerTwo, playerTwoWhiteDwarf.Value + 1);
-    //    }
-    //}
-
-    //[ServerRpc(RequireOwnership = false)]
-    //private void SetWhiteDwarfCountServerRpc(PlayerEnum player, int value)
-    //{
-    //    if (player == PlayerEnum.PlayerOne)
-    //    {
-    //        playerOneWhiteDwarf.Value = value;
-    //    }
-    //    else if (player == PlayerEnum.PlayerTwo)
-    //    {
-    //        playerTwoWhiteDwarf.Value = value;
-    //    }
-    //}
-    //public void IncreaseBlackDwarfCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetBlackDwarfCountServerRpc(PlayerEnum.PlayerOne, playerOneBlackDwarf.Value + 1);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetBlackDwarfCountServerRpc(PlayerEnum.PlayerTwo, playerTwoBlackDwarf.Value + 1);
-    //    }
-    //}
-
-    //[ServerRpc(RequireOwnership = false)]
-    //private void SetBlackDwarfCountServerRpc(PlayerEnum player, int value)
-    //{
-    //    if (player == PlayerEnum.PlayerOne)
-    //    {
-    //        playerOneBlackDwarf.Value = value;
-    //    }
-    //    else if (player == PlayerEnum.PlayerTwo)
-    //    {
-    //        playerTwoBlackDwarf.Value = value;
-    //    }
-    //}
-
-    //public int GetBlackHoleCount()
-    //{
-    //    if(Player.Instance.IAm()== PlayerEnum.PlayerOne)
-    //    {
-    //        return playerOneBlackHole.Value;
-    //    }else if(Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoBlackHole.Value;
-    //    }
-    //    return 0;
-
-    //}
-    //public int GetNeutronStarCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        return playerOneNeutronStar.Value;
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoNeutronStar.Value;
-    //    }
-    //    return 0;
-
-    //}
-    //public int GetWhiteDwarfCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        return playerOneWhiteDwarf.Value;
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoWhiteDwarf.Value;
-    //    }
-    //    return 0;
-
-    //}
-    //public int GetBlackDwarfCount()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        return playerOneBlackDwarf.Value;
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoBlackDwarf.Value;
-    //    }
-    //    return 0;
-
-    //}
-
-
-
-    //private void PlayerOneLight_OnValueChanged(int previousValue, int newValue)
-    //{
-    //    //update player two of player one's light
-        
-    //    if (Player.Instance.IAm() ==  PlayerEnum.PlayerOne)
-    //    {
-    //        CardGameManager.Instance.UpdateLight();
-    //    }else if(Player.Instance.OpponentIs() == PlayerEnum.PlayerOne)
-    //    {
-    //        LightServerRpc(PlayerEnum.PlayerOne);
-    //    }
-
-    //}
-    //private void PlayerTwoLight_OnValueChanged(int previousValue, int newValue)
-    //{
-    //    //update player one of player two's light
-        
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        CardGameManager.Instance.UpdateLight();
-    //    }else if(Player.Instance.OpponentIs() == PlayerEnum.PlayerTwo)
-    //    {
-    //        LightServerRpc(PlayerEnum.PlayerTwo);
-    //    }
-    //}
-    //[ServerRpc(RequireOwnership =false)]
-    //private void LightServerRpc(PlayerEnum playerLightChanged)
-    //{
-    //    LightClientRpc(playerLightChanged);
-    //}
-    ////ugly? isn't there a better way to do this like without server rpcss
-    //[ClientRpc]
-    //private void LightClientRpc(PlayerEnum playerLightChanged)
-    //{
-    //    if (Player.Instance.IAm() == playerLightChanged) return;
-    //    if(Player.Instance.OpponentIs() == PlayerEnum.PlayerOne)
-    //    {
-    //        CardGameManager.Instance.UpdateOpponentLight();
-    //        //OpponentBankUI.Instance.SetLightText(playerOneLight.Value);
-    //    }else if(Player.Instance.OpponentIs() == PlayerEnum.PlayerTwo)
-    //    {
-    //        CardGameManager.Instance.UpdateOpponentLight();
-    //        //OpponentBankUI.Instance.SetLightText(playerTwoLight.Value);
-    //    }
-
-    //}
-
-    
-    //private void PlayerTwoStardust_OnValueChanged(int previousValue, int newValue)
-    //{
-    //    //update player one of player two's light
-        
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        //CardGameManager.Instance.UpdateStardust();
-    //    }else if(Player.Instance.OpponentIs() == PlayerEnum.PlayerTwo)
-    //    {
-    //        //StardustServerRpc(PlayerEnum.PlayerTwo);
-    //    }
-    //}
+   
     
 
     private void PlayersReady_OnValueChanged(bool previousValue, bool newValue)
@@ -443,115 +156,7 @@ public class DivineMultiplayer : NetworkBehaviour
         }
     }
 
-    //public int GetStardust()
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //       //return  playerOneStardust.Value;
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoStardust.Value;
-    //    }
-    //    return 0;
-    //}
-    //public int GetOpponentStardust()
-    //{
-    //    if (Player.Instance.OpponentIs() == PlayerEnum.PlayerOne)
-    //    {
-    //        //return playerOneStardust.Value;
-    //    }
-    //    else if (Player.Instance.OpponentIs() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoStardust.Value;
-    //    }
-    //    return 0;
-    //}
-
-
-
-    //public int GetOpponentLight()
-    //{
-    //    if (Player.Instance.OpponentIs() == PlayerEnum.PlayerOne)
-    //    {
-    //        return playerOneLight.Value;
-    //    }
-    //    else if (Player.Instance.OpponentIs() == PlayerEnum.PlayerTwo)
-    //    {
-    //        return playerTwoLight.Value;
-    //    }
-    //    return 0;
-    //}
-
-    //public void IncreaseLight(int value)
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetLightServerRpc(PlayerEnum.PlayerOne, playerOneLight.Value + value);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetLightServerRpc(PlayerEnum.PlayerTwo, playerTwoLight.Value + value);
-    //    }
-    //}
-    //public void DecreaseLight(int value)
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        SetLightServerRpc(PlayerEnum.PlayerOne, playerOneLight.Value - value);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetLightServerRpc(PlayerEnum.PlayerTwo, playerTwoLight.Value - value);
-    //    }
-    //}
-
-    //public void DecreaseStardust(int value)
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        //SetStardustServerRpc(PlayerEnum.PlayerOne, playerOneStardust.Value - value);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetStardustServerRpc(PlayerEnum.PlayerTwo, playerTwoStardust.Value - value);
-    //    }
-    //}
-    //public void IncreaseStardust(int value)
-    //{
-    //    if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
-    //    {
-    //        //SetStardustServerRpc(PlayerEnum.PlayerOne, playerOneStardust.Value + value);
-    //    }
-    //    else if (Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-    //    {
-    //        SetStardustServerRpc(PlayerEnum.PlayerTwo, playerTwoStardust.Value + value);
-    //    }
-    //}
-    //[ServerRpc(RequireOwnership =false)]
-    //public void SetStardustServerRpc(PlayerEnum player, int value)
-    //{
-    //    if(player == PlayerEnum.PlayerOne)
-    //    {
-    //        //playerOneStardust.Value = value;
-    //    }else if(player == PlayerEnum.PlayerTwo)
-    //    {
-    //        playerTwoStardust.Value = value;
-    //    }
-    //}
-
-    //[ServerRpc(RequireOwnership = false)]
-    //public void SetLightServerRpc(PlayerEnum player, int value)
-    //{
-    //    if (player == PlayerEnum.PlayerOne)
-    //    {
-    //        playerOneLight.Value = value;
-    //    }
-    //    else if (player == PlayerEnum.PlayerTwo)
-    //    {
-    //        playerTwoLight.Value = value;
-    //    }
-    //}
+    
 
     [ServerRpc(RequireOwnership = false)]
     public void UpdateCardStardustInOpponentFieldServerRpc(int index, int value, PlayerEnum opponent)

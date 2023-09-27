@@ -24,13 +24,10 @@ public class DeadStarBank : MonoBehaviour
     private void CardGameMaanger_OnBeginMatch(object sender, System.EventArgs e)
     {
         player = CardGameManager.Instance.GetPlayer();
-        player.OnSetMyBlackDwarf += IPlayer_OnSetMyBlackDwarf;
+        
     }
 
-    private void IPlayer_OnSetMyBlackDwarf(object sender, System.EventArgs e)
-    {
-        throw new System.NotImplementedException();
-    }
+    
 
     private void CardGameManger_OnBeginTurn(object sender, System.EventArgs e)
     {
@@ -82,7 +79,7 @@ public class DeadStarBank : MonoBehaviour
         strangeTarget.AddStatus(status);
         }
     }
-    //ugly repeated logic with expertcard ln 173
+    
     private void BlackHoleSuck()
     {
         
@@ -91,16 +88,8 @@ public class DeadStarBank : MonoBehaviour
         List<BaseCard> aliveCards = baseCards.Where(x => !x.IsCardDestroyed()).ToList();
         if (aliveCards.Count > 0) { 
         BaseCard blackHoleTarget = ListUtility.GetRandomItemFromList(aliveCards);
-        blackHoleTarget.DecreaseCardLight();
-        blackHoleTarget.DecreaseCardStardust();
-        //lifetime -= 1;
-        
-        if (blackHoleTarget.GetCardLight() <= 0 || blackHoleTarget.GetStardust() <= 0)
-        {
-                BirthBlackDwarf();
-                //DeadStarBankUI.Instance.UpdateDeadStarBankUI();
-                Destroy(blackHoleTarget.gameObject);
-        }
+            blackHoleTarget.BlackHoleApproach();
+       
         }
     }
 }
