@@ -2,19 +2,23 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using Unity.Collections;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.LookDev;
 
-public class BaseCard : MonoBehaviour
+public class BaseCard : NetworkBehaviour, ICard
 {
+    //how do I keep track of this card's stardust and light with a network variable in case a player disconnects 
+    //if I make is a network Behaviour it will make two of it, can I have two of it but in different places in the two different players??
     //public event EventHandler<OnCardHoverEventArgs> OnCardHover;
     public event EventHandler OnCardHoverEnter;
     public event EventHandler OnCardHoverExit;
     protected CardSO cardSO;
     protected GameAreaEnum gameArea;
     protected CardUI cardUI;
-    private PlayerEnum cardOwner;
     protected List<Status> statusList = new List<Status>();
     private bool hasUsedSkillThisTurn = false;
     protected bool isDestroyed = false;
@@ -23,33 +27,138 @@ public class BaseCard : MonoBehaviour
     private bool isPacified = false;
     protected Transform previousParent;
     protected RectTransform rectTransform;
-    private int stardust;
-    private int cardLight;
+    protected NetworkVariable<int> cardStardust = new NetworkVariable<int>();
+    protected NetworkVariable<int> cardLight = new NetworkVariable<int>();
 
-    
+    public event EventHandler OnCardSOAssigned;
+
+    private IPlayer player;
+
+    private NetworkVariable<FixedString32Bytes> cardTitle = new NetworkVariable<FixedString32Bytes>("");
+    private NetworkVariable<PlayerEnum> cardOwner = new NetworkVariable<PlayerEnum>();
+
     [SerializeField] private SelectedCardVisual selectedCardVisual;
     [SerializeField] private StatusIconsUI statusIconsUI;
-    
+    virtual protected void Awake()
+    {
+        
+        player = CardGameManager.Instance.GetPlayer();
+        gameArea = GameAreaEnum.Hand;
+        cardUI = GetComponentInChildren<CardUI>();
+        rectTransform = GetComponent<RectTransform>();
+    }
 
     //public class OnCardHoverEventArgs : EventArgs
     //{
     //    public Card hoveredCard;
     //}
-    virtual protected void Awake()
+    virtual public void BlackHoleApproach()
     {
-        
-        gameArea = GameAreaEnum.Hand;
-        cardUI = GetComponentInChildren<CardUI>();
-        rectTransform = GetComponent<RectTransform>();
+
     }
+    virtual public void StrangeMatterEffect()
+    {
+
+    }
+    //public void PlayCard()
+    //{
+    //    PlayCardServerRpc();
+    //}
+    //[ServerRpc(RequireOwnership =false)]
+    //private void PlayCardServerRpc()
+    //{
+    //    GetComponent<NetworkObject>().Spawn();
+    //}
+    override public void OnNetworkSpawn()
+    {
+        Hide();
+
+
+        cardTitle.OnValueChanged += cardTitle_OnValueChanged;
+        cardStardust.OnValueChanged += CardStardust_OnValueChanged;
+        cardLight.OnValueChanged += CardLight_OnValueChanged;
+        //cardOwner.OnValueChanged += cardOwner_OnValueChanged;
+
+        //assign card so
+    }
+
+    private void CardLight_OnValueChanged(int previousValue, int newValue)
+    {
+        if (gameObject.activeSelf)
+        {
+            cardUI.RefreshLightText();
+        }
+        
+    }
+
+    private void CardStardust_OnValueChanged(int previousValue, int newValue)
+    {
+        if (gameObject.activeSelf)
+        {
+            cardUI.RefreshStardustText();
+        }
+    }
+
+    private void cardTitle_OnValueChanged(FixedString32Bytes previousValue, FixedString32Bytes newValue)
+    {
+        SetCardSO();
+    }
+
+    private void Hide()
+    {
+        gameObject.SetActive(false);
+    }
+    
+
+    
+    public void PlaceCardInField()
+    {
+        //want to do this if card is mine
+        if (cardOwner.Value == Player.Instance.IAm()) {
+            
+            Transform emptyExpertCardSlot = PlayerPlayingField.Instance.GetFirstOpenExpertCardPosition();
+            cardUI.GlowLight();
+            transform.SetParent(emptyExpertCardSlot);
+            SetCardGameArea(GameAreaEnum.Field);
+            
+            //Instead of adding it to a list and having the other play client make the card there, make the card as a network object here (in a server rpc) and have a client rpc to reparent the card based on whether it is I who played this card or my opponent
+            //AddToFieldCardList(card.GetCardSO().Title);
+            RectTransform rectTransform = transform.gameObject.GetComponent<RectTransform>();
+            rectTransform.position = emptyExpertCardSlot.position;
+
+        }
+        else if (cardOwner.Value == Player.Instance.OpponentIs())
+        {
+            Transform emptyExpertCardSlot = OpponentPlayingField.Instance.GetFirstOpenExpertCardPosition();
+            cardUI.GlowLight();
+            transform.SetParent(emptyExpertCardSlot);
+            SetCardGameArea(GameAreaEnum.OpponentField);
+            
+            //Instead of adding it to a list and having the other play client make the card there, make the card as a network object here (in a server rpc) and have a client rpc to reparent the card based on whether it is I who played this card or my opponent
+            //AddToFieldCardList(card.GetCardSO().Title);
+            RectTransform rectTransform = transform.gameObject.GetComponent<RectTransform>();
+            rectTransform.position = emptyExpertCardSlot.position;
+           
+        }
+    }
+    private void Show()
+    {
+        gameObject.SetActive(true);
+    }
+    
     protected void Start()
     {
+        
         CardGameManager.Instance.OnBeginTurn += CardGameManager_OnBeginTurn;
+        CardGameManager.Instance.OnBeginTurnStep2 += CardGameManager_OnBeginTurnStep2;
         CardGameManager.Instance.OnEndTurn += CardGameManager_OnEndTurn;
         
     }
 
-    
+    virtual protected void CardGameManager_OnBeginTurnStep2(object sender, EventArgs e)
+    {
+        
+    }
 
     virtual protected void CardGameManager_OnEndTurn(object sender, EventArgs e)
     {
@@ -71,7 +180,7 @@ public class BaseCard : MonoBehaviour
         rectTransform.anchorMax = new Vector2(.5f, .5f);
         rectTransform.anchorMin = new Vector2(.5f, .5f);
         rectTransform.position = Vector2.zero;
-        rectTransform.localScale = new Vector2(3f, 3f);
+        
         SetCardGameArea(GameAreaEnum.Inspect);
         //turn off highlight
         selectedCardVisual.Hide();
@@ -85,15 +194,15 @@ public class BaseCard : MonoBehaviour
             rectTransform.anchorMin = new Vector2(.5f, .5f);
 
             rectTransform.localPosition = Vector2.zero;
-            float scale;
+            
             if (previousParent.TryGetComponent(out PlayerHand _))
             {
-                scale = UniversalConstants.HAND_CARD_SCALE;
+                
                 SetCardGameArea(GameAreaEnum.Hand);
             }
             else
             {
-                scale = UniversalConstants.FIELD_CARD_SCALE;
+                
                 if(GetCardOwner() == Player.Instance.OpponentIs())
                 {
                     SetCardGameArea(GameAreaEnum.OpponentField);
@@ -104,7 +213,7 @@ public class BaseCard : MonoBehaviour
                 }
             }
             
-            rectTransform.localScale = new Vector2(scale, scale);
+            
 
         }
     }
@@ -117,11 +226,13 @@ public class BaseCard : MonoBehaviour
     {
         OnCardHoverExit?.Invoke(this, EventArgs.Empty);
     }
-    virtual public void SetCardSO(CardSO cardSO)
+    virtual async public Task<bool> SetCardSO()
     {
-        this.cardSO = cardSO;
-        stardust = cardSO.Stardust;
-        cardLight = cardSO.Light;
+        cardSO = await CardGenerator.Instance.CardNameToCardSO(cardTitle.Value.ToString());
+        OnCardSOAssigned?.Invoke(this, EventArgs.Empty);
+        PlaceCardInField();
+        Show();
+        return true;
     }
     public CardSO GetCardSO()
     {
@@ -140,15 +251,15 @@ public class BaseCard : MonoBehaviour
     
     public void SetCardOwner(PlayerEnum playerEnum)
     {
-        cardOwner = playerEnum;
+        cardOwner.Value = playerEnum;
     }
     public PlayerEnum GetCardOwner()
     {
-        return cardOwner;
+        return cardOwner.Value;
     }
     public bool IsCardMine()
     {
-        return cardOwner == Player.Instance.IAm();
+        return cardOwner.Value == Player.Instance.IAm();
     }
     
     
@@ -172,7 +283,7 @@ public class BaseCard : MonoBehaviour
     }
     virtual public bool IsCardDestroyed()
     {
-        return false;
+        return isDestroyed;
     }
     public int GenerateLight()
     {
@@ -180,8 +291,8 @@ public class BaseCard : MonoBehaviour
         if (isDestroyed) return 0;
         //ParticleSystem particleSystem = GetComponentInChildren<ParticleSystem>();
         //ParticleSystem.Burst burst = particleSystem.emission.GetBurst(0);
-
-        DivineMultiplayer.Instance.IncreaseLight(cardLight);
+        
+        
             //burst.cycleCount = light;
             //particleSystem.emission.SetBurst(0, burst);
             //particleSystem.GetComponent<ParticleSystemRenderer>().material = Materials.Instance.yellowEnergyMaterial;
@@ -189,7 +300,7 @@ public class BaseCard : MonoBehaviour
 
         cardUI.GlowLight();
         //particleSystem.Play();
-        return cardLight;
+        return cardLight.Value;
     }
 
 
@@ -220,49 +331,30 @@ public class BaseCard : MonoBehaviour
     {
         return previousParent;
     }
-    public int GetStardust()
+    public int GetCardStardust()
     {
-        return stardust;
+        return cardStardust.Value;
     }
-    public void IncrementCardStardust(int value)
-    {
-         stardust += value;
-        //update the uiSetStardustText
-        cardUI.RefreshStardustText();
-        if (cardOwner == Player.Instance.IAm())
-        {
-            //update other player
-            DivineMultiplayer.Instance.UpdateCardStardustInOpponentFieldServerRpc(GetIndex(), stardust, Player.Instance.OpponentIs());
-        }
-        
-    }
+    
     //ugly warning if use this ineaset of increment/decrement opponent won't be updated
-    public void SetCardStardust(int value)
-    {
-        stardust = value;
-        cardUI.RefreshStardustText();
-    }
+    
 
-    public void SetLight(int value)
+    public void SetCardLight(int newValue)
     {
-        cardLight = value;
-        cardUI.RefreshLightText();
+        if(!IsCardDestroyed())
+        SetCardLightServerRpc(newValue);
+        //cardUI.RefreshLightText();
     }
-
-    public void DecreaseCardStardust()
+    [ServerRpc(RequireOwnership =false)]
+    private void SetCardLightServerRpc(int newValue)
     {
-        stardust--;
-        cardUI.RefreshStardustText();
-        if (cardOwner == Player.Instance.IAm())
-        {
-            //update other player
-            DivineMultiplayer.Instance.UpdateCardStardustInOpponentFieldServerRpc(GetIndex(), stardust, Player.Instance.OpponentIs());
-        }
-        //update other player
+        cardLight.Value = newValue;
+        CheckDestroy(newValue);
     }
+   
     public int GetCardLight()
     {
-        return cardLight;
+        return cardLight.Value;
     }
 
     public CardUI GetCardUI()
@@ -270,16 +362,7 @@ public class BaseCard : MonoBehaviour
         return cardUI;
     }
 
-    public void DecreaseCardLight()
-    {
-        cardLight--;
-        cardUI.RefreshLightText();
-        if (cardOwner == Player.Instance.IAm())
-        {
-            //update other player
-            DivineMultiplayer.Instance.UpdateCardLightInOpponentFieldServerRpc(GetIndex(), cardLight, Player.Instance.OpponentIs());
-        }
-    }
+    
     private int GetIndex()
     {
         return PlayerPlayingField.Instance
@@ -287,9 +370,81 @@ public class BaseCard : MonoBehaviour
                 .FindIndex(x => x == this);
     }
 
-    public int GetLight()
+    
+    
+    
+    public void SetCardTitle(string title)
     {
-        return cardLight;
+        cardTitle.Value = title;
+        
     }
 
+    public void PlayCard()
+    {
+        //will never be called
+    }
+
+    virtual public int GetLifetime()
+    {
+        return 0;
+    }
+
+    public void SetCardStardust(int newValue)
+    {
+        if(!IsCardDestroyed())
+        SetCardStardustServerRpc(newValue);
+    }
+
+    [ServerRpc(RequireOwnership =false)]
+    private void SetCardStardustServerRpc(int newValue)
+    {
+        cardStardust.Value = newValue;
+       
+        CheckDestroy(newValue);
+    }
+    private void CheckDestroy(int value)
+    {
+        if (value <= 0 && !isDestroyed)
+        {
+           DeadStarBank.Instance.BirthBlackDwarf();
+        //DeadStarBankUI.Instance.UpdateDeadStarBankUI();
+        DestroyCardServerRpc();
+        isDestroyed = true; 
+        }
+        
+    }
+    public void Die()
+    {
+        //DeadStarBankUI.Instance.UpdateDeadStarBankUI();
+        DestroyCardServerRpc();
+        isDestroyed = true;
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void DestroyCardServerRpc()
+    {
+        GetComponent<NetworkObject>().Despawn(true);
+    }
+    virtual public void SetLifetime(int lifetime)
+    {
+        
+    }
+
+    [ServerRpc(RequireOwnership =false)]
+    public void GlowLightServerRpc()
+    {
+        GlowLightClientRpc();
+    }
+    [ClientRpc]
+    public void GlowLightClientRpc()
+    {
+
+        if(cardOwner.Value == Player.Instance.OpponentIs())
+        {
+            cardUI.GlowLight();
+        }
+    }
+    public string GetCardTitle()
+    {
+        return cardTitle.Value.ToString();
+    }
 }

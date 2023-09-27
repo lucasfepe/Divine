@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -13,15 +14,34 @@ public class ExpertCard : BaseCard
     
 
     private int level = 1;
-    
-    private LevelUpMenuUI levelUpMenuUI;
-    private int lifetime;
+    private NetworkVariable<int> lifetime = new NetworkVariable<int>();
+    private NetworkVariable<bool> isRedGiant = new NetworkVariable<bool>();
     private int experience;
     public event EventHandler OnLevelUp;
     private int health;
-    private bool isGiant = false;
+    private int cardStatDecrement = 0;
+    
 
+    override public void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+      
+        lifetime.OnValueChanged += Lifetime_OnValueChanged;
+        isRedGiant.OnValueChanged += IsRedGiant_OnValueChanged;
+      
+    }
 
+    private void IsRedGiant_OnValueChanged(bool previousValue, bool newValue)
+    {
+        cardUI.BecomeRedGiant();
+        
+    }
+
+    private void Lifetime_OnValueChanged(int previousValue, int newValue)
+    {
+        //update the ui 
+        ((ExpertCardUI)cardUI).RefreshLifetime();
+    }
 
     override protected void Awake()
     {
@@ -31,189 +51,54 @@ public class ExpertCard : BaseCard
         level = 1;
         
         cardUI = GetComponentInChildren<CardUI>();
-        levelUpMenuUI = GetComponentInChildren<LevelUpMenuUI>();
         //RefreshBaseEnergyGeneration();
     }
 
-    override  public void SetCardSO(CardSO cardSO)
+    override async public Task<bool> SetCardSO()
     {
-       base.SetCardSO(cardSO);
-        
-        lifetime = cardSO.Lifetime;
+       await base.SetCardSO();
+        return true;
     }
 
-    override public bool IsCardDestroyed(){
+    
 
-        return isDestroyed;
-    }
-
-    private void RefreshBaseEnergyGeneration()
-    {
-        //TalentValues baseEnergyGeneration = cardSO.expertStatsObjectFromJson.levels[level - 1].energyGeneration;
-        if (baseEnergyGeneration.art != 0) { base.baseEnergyGeneration.art = baseEnergyGeneration.art; }
-        if (baseEnergyGeneration.brawn != 0) { base.baseEnergyGeneration.brawn = baseEnergyGeneration.brawn; }
-        if (baseEnergyGeneration.philosophy != 0) { base.baseEnergyGeneration.philosophy = baseEnergyGeneration.philosophy; }
-        if (baseEnergyGeneration.science != 0) { base.baseEnergyGeneration.science = baseEnergyGeneration.science; }
-    }
+   
     override protected void CardGameManager_OnEndTurn(object sender, EventArgs e)
     {
         base.CardGameManager_OnEndTurn(sender, e);
+        cardStatDecrement = 0;
         if (GetCardOwner() == Player.Instance.OpponentIs())
         {
-            Age();
-            if (!isDestroyed) { 
-            cardUI.RefreshUI();
-            }
-            if (lifetime < 0)
+            
+            if (lifetime.Value < 1)
             {
-                if (!isDestroyed)
-                {
-                    Destroy(gameObject);
-                    isDestroyed = true;
-                };
-            }
-            else if (lifetime < 1)
-            {
-                if (!(cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
-                    || cardSO.Rank == StarClassEnum.YELLOW || cardSO.Rank == StarClassEnum.ORANGE))
-                {
-                    if (!isDestroyed)
-                    {
-                        Destroy(gameObject);
-                        isDestroyed = true;
-                    };
-                }
-                else if(cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
+               if(cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
                     || cardSO.Rank == StarClassEnum.YELLOW || cardSO.Rank == StarClassEnum.ORANGE) { cardUI.GetRedGiantImage(); }
             }
         }
     }
+    
+    [ServerRpc(RequireOwnership = false)]
+    private void BecomeRedGiantServerRpc()
+    {
+        isRedGiant.Value = true;
+    }
     override protected void CardGameManager_OnBeginTurn(object sender, EventArgs e)
     {
         base.CardGameManager_OnBeginTurn(sender, e);
-
-        if (gameArea != GameAreaEnum.Hand && GetCardOwner() == Player.Instance.IAm()) {
+        if(GetCardOwner() == Player.Instance.IAm())
             Age();
-            if (lifetime < 1)
-            {
-                if(cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
-                    || cardSO.Rank == StarClassEnum.YELLOW || cardSO.Rank == StarClassEnum.ORANGE)
-                {
-                    //change card image
-                    isGiant = true;
-                    cardUI.GetRedGiantImage();
-                }
-                else {
-                    DeadStarBank.Instance.BirthWhiteDwarf();
-                    //ugly do this in DeadStarBank itself
-                    DeadStarBankUI.Instance.UpdateDeadStarBankUI();
-                Destroy(gameObject);
-                isDestroyed = true;
-                }
-            }
-            if(lifetime < 0)
-            {
-                if (cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
-                    || cardSO.Rank == StarClassEnum.YELLOW || cardSO.Rank == StarClassEnum.ORANGE)
-                {
-                    //CardGameManager.Instance.GainStardust(stardust);
-                    if(cardSO.Rank == StarClassEnum.ORANGE || cardSO.Rank == StarClassEnum.YELLOW)
-                    {
-                        DeadStarBank.Instance.BirthWhiteDwarf();
-                    }else if (cardSO.Rank == StarClassEnum.WHITE 
-                        || cardSO.Rank == StarClassEnum.BLUE)
-                    {
-                        CardGameManager.Instance.stardustFromSupernova += GetStardust();
-                        if (cardSO.Rank == StarClassEnum.WHITE)
-                        {
-                            DeadStarBank.Instance.BirthNeutronStar();
-                        }
-                        else if (cardSO.Rank == StarClassEnum.BLUE)
-                        {
-                            DeadStarBank.Instance.BirthBlackHole();
-                        }
-                    }
-                    
-                    DeadStarBankUI.Instance.UpdateDeadStarBankUI();
-                    
-                    
-                    //int cardIndex = OpponentPlayingField.Instance.GetAllOpponentExpertCards().FindIndex(x => x == targetCard);
-                    //DivineMultiplayer.Instance.AbsorbServerRpc(cardIndex, targetCard.GetCardOwner());
-
-                }
-                Destroy(gameObject);
-                isDestroyed = true;
-            }
-            cardUI.RefreshUI();
-            
-        }
-
-        //reset
-        energyGeneration.art = baseEnergyGeneration.art;
-        energyGeneration.brawn = baseEnergyGeneration.brawn;
-        energyGeneration.philosophy = baseEnergyGeneration.philosophy;
-        energyGeneration.science = baseEnergyGeneration.science;
-
+        
         int index = 0;
         List<Status> statusesToRemove = new List<Status>();
         foreach (Status status in statusList)
         {
             switch (status.statusType)
             {
-                //        case EffectTypeEnum.BonusEnergy:
-                //            //select all energy types that are generated and pick random one to boost
-                //            List<RankEnum> energyTypesGenerated = new List<RankEnum>();
-
-                //            if(energyGeneration.art != 0) 
-                //            { 
-                //                energyTypesGenerated.Add(RankEnum.Art); 
-                //            }
-                //            if (energyGeneration.brawn != 0)
-                //            {
-                //                energyTypesGenerated.Add(RankEnum.Brawn);
-                //            }
-                //            if (energyGeneration.philosophy != 0)
-                //            {
-                //                energyTypesGenerated.Add(RankEnum.Philosophy);
-                //            }
-                //            if (energyGeneration.science != 0)
-                //            {
-                //                energyTypesGenerated.Add(RankEnum.Science);
-                //            }
-                //            RankEnum energyTypeToBoost = ListUtility.GetRandomItemFromList(energyTypesGenerated);
-                //            //Generate energy boost
-                //            switch (energyTypeToBoost)
-                //            {
-                //                case RankEnum.Art:
-                //                    energyGeneration.art += status.statusPower;
-                //                    break;
-                //                case RankEnum.Brawn:
-                //                    energyGeneration.brawn += status.statusPower;
-                //                    break; 
-                //                case RankEnum.Philosophy:
-                //                    energyGeneration.philosophy += status.statusPower;
-                //                    break;
-                //                case RankEnum.Science:
-                //                    energyGeneration.science += status.statusPower;
-                //                    break;
-                //            }
-                //            //Remove this status
-                //            GetComponentInChildren<StatusIconsUI>().RemoveStatusIcon(index);
-                //            statusesToRemove.Add(status);
-                //            break;
+               
                 case EffectTypeEnum.Strange:
-                    DecreaseCardLight();
-                    DecreaseCardStardust();
-                    //lifetime -= 1;
-                    cardUI.RefreshUI();
-                    if(GetCardLight() <= 0 || GetStardust() <= 0 || lifetime <= 0)
-                    {
-                        DeadStarBank.Instance.BirthBlackDwarf();
-                        DeadStarBankUI.Instance.UpdateDeadStarBankUI();
-                        Destroy(gameObject);
-                        
-                    }
-                    //((ExpertCardUI)cardUI).RefreshExperience();
+                    StrangeMatterEffect();
+                    
                     //Remove this status
                     //GetComponentInChildren<StatusIconsUI>().RemoveStatusIcon(index);
                     statusesToRemove.Add(status);
@@ -226,13 +111,93 @@ public class ExpertCard : BaseCard
         //statusList.RemoveAll(x => statusesToRemove.Contains(x));
     }
 
-    public int GetLifetime()
+    override protected void CardGameManager_OnBeginTurnStep2(object sender, EventArgs e)
     {
-        return lifetime;
+        //need to do this here because by now hlack hole and neutron star will have actuated
+        //what if I kill it right when the nv changes
+        if (GetCardOwner() == Player.Instance.IAm() && cardStatDecrement != 0)
+            DecrementStats();
+    }
+    override public void StrangeMatterEffect()
+    {
+        cardStatDecrement++;
+    }
+    override public void BlackHoleApproach()
+    {
+        cardStatDecrement++;
+    }
+    public void DecrementStats()
+    {
+        
+        
+        SetCardStardust(cardLight.Value - cardStatDecrement);
+        SetCardLight(cardLight.Value - cardStatDecrement);
+            
+    }
+    public override void SetLifetime(int lifetime)
+    {
+        SetCardLifetimeServerRpc(lifetime);
     }
     public void Age()
     {
-        lifetime--;
+        int lifetimeDecrement = 1;
+        if (gameArea != GameAreaEnum.Hand && GetCardOwner() == Player.Instance.IAm())
+        {
+            
+            int nextAge = lifetime.Value - lifetimeDecrement;
+            if (nextAge < 1)
+            {
+
+                if (cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
+                    || cardSO.Rank == StarClassEnum.YELLOW || cardSO.Rank == StarClassEnum.ORANGE)
+                {
+                    //change card image
+                    BecomeRedGiantServerRpc();
+
+                }
+                else
+                {
+                    DeadStarBank.Instance.BirthWhiteDwarf();
+                    Die();
+                }
+            }
+
+            if (nextAge < 0)
+            {
+                if (cardSO.Rank == StarClassEnum.WHITE || cardSO.Rank == StarClassEnum.BLUE
+                    || cardSO.Rank == StarClassEnum.YELLOW || cardSO.Rank == StarClassEnum.ORANGE)
+                {
+                    //need to destory before running logic because logic will consider this card as alive if do it later
+                    Die();
+                    //CardGameManager.Instance.GainStardust(stardust);
+                    if (cardSO.Rank == StarClassEnum.ORANGE || cardSO.Rank == StarClassEnum.YELLOW)
+                    {
+                        DeadStarBank.Instance.BirthWhiteDwarf();
+                    }
+                    else if (cardSO.Rank == StarClassEnum.WHITE
+                        || cardSO.Rank == StarClassEnum.BLUE)
+                    {
+                        CardGameManager.Instance.stardustFromSupernova += GetCardStardust();
+                        if (cardSO.Rank == StarClassEnum.WHITE)
+                        {
+                            DeadStarBank.Instance.BirthNeutronStar();
+                        }
+                        else if (cardSO.Rank == StarClassEnum.BLUE)
+                        {
+                            DeadStarBank.Instance.BirthBlackHole();
+                        }
+                    }
+
+                }
+
+            }}
+        if (!IsCardDestroyed())
+            SetCardLifetimeServerRpc(lifetime.Value - lifetimeDecrement);
+    }
+    [ServerRpc(RequireOwnership =false)]
+    private void SetCardLifetimeServerRpc(int newValue)
+    {
+        lifetime.Value = newValue;
     }
     public int GetLevel()
     {
@@ -353,31 +318,18 @@ public class ExpertCard : BaseCard
         {
             case EffectTypeEnum.Absorb:
                 //Reduce the health in my own game
-                IncrementCardStardust(((ExpertCard)targetCard).GetStardust());
+                SetCardStardust(GetCardStardust() + targetCard.GetCardStardust());
                 
                 //CardGameManager.Instance.GainStardust(((ExpertCard)targetCard).stardust);
-                Destroy(targetCard.gameObject);
-                int cardIndex = OpponentPlayingField.Instance.GetAllOpponentExpertCards().FindIndex(x => x == targetCard);
-                DivineMultiplayer.Instance.AbsorbServerRpc(cardIndex, targetCard.GetCardOwner());
+                
+                targetCard.Die();
+                
                 break;
         }
 
     }
 
-    private void Damage(int damage)
-    {
-        health -= damage;
-        //find index of card in any game (mine or opponent)
-        int cardIndex = OpponentPlayingField.Instance.GetAllOpponentExpertCards().FindIndex(x => x == this);
-        //Decrease health of opponent's card in opponent's game
-        DivineMultiplayer.Instance.HealthChangedServerRpc(cardIndex, damage, GetCardOwner());
-
-        if (health <= 0)
-        {
-            Destroy(gameObject);
-        }
-        
-    }
+    
 
     //public ExpertLevel GetExpertLevel()
     //{
@@ -395,9 +347,9 @@ public class ExpertCard : BaseCard
         base.InspectCard();
         //((ExpertCardUI)cardUI).ShowSkills();
     }
-    public override bool IsGiant()
+    override public bool IsGiant()
     {
-        return isGiant;  
+        return isRedGiant.Value;
     }
     public void UseSkill()
     {
@@ -420,6 +372,11 @@ public class ExpertCard : BaseCard
         }
 
         //OnUseSkill?.Invoke(this, EventArgs.Empty);
+    }
+
+     override public int GetLifetime()
+    {
+        return lifetime.Value;
     }
 }
 

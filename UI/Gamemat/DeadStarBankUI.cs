@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -10,26 +11,44 @@ public class DeadStarBankUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI whiteDwarfText;
     [SerializeField] private TextMeshProUGUI neutronStarText;
     [SerializeField] private TextMeshProUGUI blackHoleText;
+
+    private IPlayer player;
+
     private void Awake()
     {
         Instance = this;
     }
-    public void UpdateDeadStarBankUI()
+    private void Start()
     {
-        //ugly isn't there a way to do this without the if like based on maybe assign a class to 
-        if (Player.Instance.IAm() == PlayerEnum.PlayerOne) { 
-        blackDwarfText.text = DivineMultiplayer.Instance.playerOneBlackDwarf.Value.ToString();
-        whiteDwarfText.text = DivineMultiplayer.Instance.playerOneWhiteDwarf.Value.ToString();
-        neutronStarText.text = DivineMultiplayer.Instance.playerOneNeutronStar.Value.ToString();
-        blackHoleText.text = DivineMultiplayer.Instance.playerOneBlackHole.Value.ToString();
-        }else if(Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-        {
-            blackDwarfText.text = DivineMultiplayer.Instance.playerTwoBlackDwarf.Value.ToString();
-            whiteDwarfText.text = DivineMultiplayer.Instance.playerTwoWhiteDwarf.Value.ToString();
-            neutronStarText.text = DivineMultiplayer.Instance.playerTwoNeutronStar.Value.ToString();
-            blackHoleText.text = DivineMultiplayer.Instance.playerTwoBlackHole.Value.ToString();
-        }
-
+        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
+    }
+    
+    private void CardGameManager_OnBeginMatch(object sender, System.EventArgs e)
+    {
+        player = CardGameManager.Instance.GetPlayer();
+        player.OnSetMyBlackDwarf += IPlayer_OnSetMyBlackDwarf;
+        player.OnSetMyWhiteDwarf += IPlayer_OnSetMyWhiteDwarf;
+        player.OnSetMyNeutronStar += IPlayer_OnSetMyNeutronStar;
+        player.OnSetMyBlackHole += IPlayer_OnSetMyBlackHole;
     }
 
+    private void IPlayer_OnSetMyBlackHole(object sender, EventArgs e)
+    {
+        blackHoleText.text = player.GetBlackHole().ToString();
+    }
+
+    private void IPlayer_OnSetMyNeutronStar(object sender, EventArgs e)
+    {
+        neutronStarText.text = player.GetNeutronStar().ToString();
+    }
+
+    private void IPlayer_OnSetMyWhiteDwarf(object sender, EventArgs e)
+    {
+        whiteDwarfText.text = player.GetWhiteDwarf().ToString();
+    }
+
+    private void IPlayer_OnSetMyBlackDwarf(object sender, EventArgs e)
+    {
+        blackDwarfText.text = player.GetBlackDwarf().ToString();
+    }
 }

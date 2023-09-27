@@ -4,8 +4,10 @@ using UnityEngine;
 
 public static class UniversalConstants 
 {
+    public const int LIGHT_WIN_THRESHOLD = 300;
     public const float FIELD_CARD_SCALE = .8f;
     public const float HAND_CARD_SCALE = .65f;
+    public const float INSPECT_CARD_SCALE = 3f;
     public const float CARD_PILE_OFFSET = 1f;
     public const string BONUS_ENERGY_DESCRIPTION = "            Adds \"Inspired\" status to\ntarget. Status resolves at the beginning\nof the next turn to gain target's bonus\nenergy type by the POWER amount.";
     public const string GAIN_EXPERIENCE_DESCRIPTION = "              Adds \"Enlightened\" status\r\nto target. Status resolves at the\r\nbeginning of the next turn to gain\r\nexperience equal to POWER amount.";

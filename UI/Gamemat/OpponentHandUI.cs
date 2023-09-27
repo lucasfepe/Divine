@@ -51,7 +51,7 @@ public class OpponentHandUI : NetworkBehaviour
             {
                 numberCardsInOpponentHand++;
                 Image newCard = Instantiate(cardBack, transform);
-                OpponentHandResponsive.Instance.ResponsiveCard(newCard.GetComponent<RectTransform>());
+               
             }
             
             
@@ -69,7 +69,7 @@ public class OpponentHandUI : NetworkBehaviour
             {
                 numberCardsInOpponentHand++;
                 Image newCard = Instantiate(cardBack, transform);
-                OpponentHandResponsive.Instance.ResponsiveCard(newCard.GetComponent<RectTransform>());
+               
             }
             
                 

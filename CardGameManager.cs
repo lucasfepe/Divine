@@ -12,6 +12,8 @@ public class CardGameManager : NetworkBehaviour
     public static CardGameManager Instance { get; private set; }
 
     [SerializeField] private GameObject playerField;
+    [SerializeField] private PlayerOne playerOne;
+    [SerializeField] private PlayerTwo playerTwo;
 
     public const int PROGRESS_BAR_MAX = 50;
     
@@ -27,15 +29,18 @@ public class CardGameManager : NetworkBehaviour
     private bool eurekaThisTurn = false;
     private bool isSelectingTarget = false;
     public int stardustFromSupernova = 0;
+    private IPlayer player;
+    private IPlayer opponent;
 
-    public event EventHandler OnUpdateBankedStardust;
-    public event EventHandler OnUpdateBankedLight;
-    public event EventHandler OnUpdateOpponentStardust;
-    public event EventHandler OnUpdateOpponentLight;
+
+    
+    
     public event EventHandler OnBeginTurn;
     public event EventHandler OnBeginTurnStep2;
     public event EventHandler OnEndTurn;
     public event EventHandler<OnWinEventArgs> OnWin;
+    public event EventHandler OnBeginMatch;
+    
 
     public class OnWinEventArgs : EventArgs
     {
@@ -55,47 +60,43 @@ public class CardGameManager : NetworkBehaviour
     {
         Instance = this;
     }
-    
-    private void Start()
-    {
-        DivineMultiplayer.Instance.OnPlayerProgressChanged += DivineMultiplayer_OnPlayerProgressChanged;
-    }
 
-    private void DivineMultiplayer_OnPlayerProgressChanged(object sender, DivineMultiplayer.OnPlayerProgressChangedEventArgs e)
+    public override void OnNetworkSpawn()
     {
-       //Check if match ends
-        if(e.playerEnum == PlayerEnum.PlayerOne)
+        if (IsHost)
         {
-            if(DivineMultiplayer.Instance.playerOneProgress.Value >= PROGRESS_BAR_MAX)
-            {
-                isGameOver = true;
-                MatchEndServerRpc(1);
-            }
-        }else if(e.playerEnum == PlayerEnum.PlayerTwo)
+            player = playerOne;
+            opponent = playerTwo;
+                //gameObject.AddComponent<PlayerOne>();
+        }
+        else
         {
-            if (DivineMultiplayer.Instance.playerTwoProgress.Value >= PROGRESS_BAR_MAX)
-            {
-                isGameOver = true;
-                MatchEndServerRpc(2);
-            }
+            player = playerTwo;
+            opponent = playerOne;
+            //When the second player joins, begin the match
+            BeginMatchServerRpc();
+            
         }
     }
+
+
+    
     [ServerRpc(RequireOwnership =false)]
-    private void MatchEndServerRpc(int winner)
+    public void MatchEndServerRpc(PlayerEnum winner)
     {
         MatchEndClientRpc(winner);
     }
     [ClientRpc]
-    private void MatchEndClientRpc(int winner)
+    private void MatchEndClientRpc(PlayerEnum winner)
     {
-        if(winner == 1)
+        if(winner == PlayerEnum.PlayerOne)
         {
             OnWin?.Invoke(this, new OnWinEventArgs
             {
                 playerEnum = PlayerEnum.PlayerOne
             });
         }
-        else
+        else if(winner == PlayerEnum.PlayerTwo)
         {
             OnWin?.Invoke(this, new OnWinEventArgs
             {
@@ -119,13 +120,12 @@ public class CardGameManager : NetworkBehaviour
         OnBeginTurn?.Invoke(this, EventArgs.Empty);
         OnBeginTurnStep2?.Invoke(this, EventArgs.Empty);
         int stardustPerTurn = 5;
-        //ugly is there no centralized way to do this
-        DivineMultiplayer.Instance.IncreaseStardust(stardustPerTurn + stardustFromSupernova);
+        player.SetStardust(player.GetStardust() + stardustPerTurn + stardustFromSupernova);
         
         BankUI.Instance.GlowStardust(stardustPerTurn + stardustFromSupernova);
         stardustFromSupernova = 0;
         
-        OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
+        //OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
 
         turn++;
         isMyTurn = true;
@@ -144,8 +144,8 @@ public class CardGameManager : NetworkBehaviour
             accumulatedLightSum += light;
             return accumulatedLightSum;
         });
-        OnUpdateBankedLight?.Invoke(this, EventArgs.Empty);
-
+        //set all at once instead of individually inside GenerateLight so the glow is proportinal to the whole gain
+        player.SetLight(player.GetLight() + lightSumGeneration);
         //update progress
         //if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
         //{
@@ -178,16 +178,6 @@ public class CardGameManager : NetworkBehaviour
         OnEndTurn?.Invoke(this, EventArgs.Empty);
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    private void SetPlayerOneProgressServerRpc(int change)
-    {
-        DivineMultiplayer.Instance.playerOneProgress.Value += change;
-    }
-    [ServerRpc(RequireOwnership = false)]
-    private void SetPlayerTwoProgressServerRpc(int change)
-    {
-        DivineMultiplayer.Instance.playerTwoProgress.Value += change;
-    }
 
     
         
@@ -204,6 +194,7 @@ public class CardGameManager : NetworkBehaviour
     [ClientRpc]
     public void BeginMatchClientRpc()
     {
+        OnBeginMatch?.Invoke(this, EventArgs.Empty);
         PlayerDeck.Instance.GetActiveDeck();
     }
     [ServerRpc(RequireOwnership =false)]
@@ -278,41 +269,31 @@ public class CardGameManager : NetworkBehaviour
         isSelectingTarget = false;
     }
 
-    public void UseBankedStardust(int value)
-    {
-        DivineMultiplayer.Instance.DecreaseStardust(value);
-        OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
-    }
+    
 
-    public void PlayCard(BaseCard card)
-    {
-        UseBankedStardust(card.GetStardust());
-        DivineMultiplayer.Instance.IncreaseLight(card.GetCardLight());
+    //public void PlayCard(BaseCard card)
+    //{
+    //    player.SetStardust(player.GetStardust() - card.GetStardust());
+    //    player.SetLight(player.GetLight() + card.GetLight());
        
-        OnUpdateBankedLight?.Invoke(this, EventArgs.Empty);
-        card.GetCardUI().GlowLight();
-    }
+    //    card.GetCardUI().GlowLight();
+    //}
     public void GainStardust(int stardustGain)
     {
-        DivineMultiplayer.Instance.IncreaseStardust(stardustGain);
+        player.SetStardust(player.GetStardust() + stardustGain);
         BankUI.Instance.GlowStardust(stardustGain);
-        OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
+        //OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
     }
 
-    public void UpdateStardust()
+    
+
+    public IPlayer GetPlayer()
     {
-        OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
+        return player;
     }
-    public void UpdateLight()
+
+    public IPlayer GetOpponent()
     {
-        OnUpdateBankedLight?.Invoke(this, EventArgs.Empty);
-    }
-    public void UpdateOpponentStardust()
-    {
-        OnUpdateOpponentStardust?.Invoke(this, EventArgs.Empty);
-    }
-    public void UpdateOpponentLight()
-    {
-        OnUpdateOpponentLight?.Invoke(this, EventArgs.Empty);
+        return opponent;
     }
 }

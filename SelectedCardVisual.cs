@@ -5,16 +5,21 @@ using UnityEngine;
 
 public class SelectedCardVisual : MonoBehaviour
 {
-    [SerializeField] private BaseCard card;
+    [SerializeField] private GameObject cardGO;
     [SerializeField] private GameObject[] visualGameObjectArray;
     private Canvas canvas;
-    
+    private ICard card;
+
+    private void Awake()
+    {
+        card = cardGO.GetComponent<ICard>();
+    }
 
     private void Start()
     {
         card.OnCardHoverEnter += Card_OnCardHover;
         card.OnCardHoverExit += Card_OnCardHoverExit;
-        canvas = card.GetComponentInChildren<Canvas>();
+        canvas = cardGO.GetComponentInChildren<Canvas>();
     }
 
     private void Card_OnCardHoverExit(object sender, EventArgs e)

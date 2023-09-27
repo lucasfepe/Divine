@@ -25,46 +25,45 @@ public class OpponentBankUI : MonoBehaviour
     private void Start()
     {
 
-        CardGameManager.Instance.OnUpdateOpponentStardust += CardGameManager_OnUpdateOpponentStardust;
-        CardGameManager.Instance.OnUpdateOpponentLight += CardGameManager_OnUpdateOpponentLight;
+        
+        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch; ;
         
     }
-    //ugly maybe this whole thing is also done in BankUI
-    private void CardGameManager_OnUpdateOpponentLight(object sender, EventArgs e)
+
+    private void CardGameManager_OnBeginMatch(object sender, EventArgs e)
+    {
+        CardGameManager.Instance.GetPlayer().OnSetOpponentStardust += IPlayer_OnUpdateOpponentStardust;
+        CardGameManager.Instance.GetPlayer().OnSetOpponentLight += IPlayer_OnSetOpponentLight;
+        
+    }
+
+    private void IPlayer_OnSetOpponentLight(object sender, EventArgs e)
     {
         int previousLight = Int32.Parse(lightText.text);
-        int lightDiff = 0;
-        int lightValue = 0;
-
-        lightValue = DivineMultiplayer.Instance.GetOpponentLight();
-        lightDiff = lightValue - previousLight;
-        float lightTimer;    
-        
+        int lightValue = CardGameManager.Instance.GetOpponent().GetLight();
+        int lightDiff =  lightValue - previousLight;
+        float lightTimer;
 
         if (lightDiff < 0)
         {
             lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * lightDiff / speedUpWhenDecrease);
             changeLightTextGradually.SetText(lightTimer, lightValue);
-
         }
         else if (lightDiff > 0)
         {
-
             lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(lightDiff);
             changeLightTextGradually.SetText(lightTimer, lightValue);
             GlowLight(lightDiff);
-
         }
     }
+//ugly maybe this whole thing is also done in BankUI
 
-    private void CardGameManager_OnUpdateOpponentStardust(object sender, EventArgs e)
+    private void IPlayer_OnUpdateOpponentStardust(object sender, EventArgs e)
     {
         int previousStardust = Int32.Parse(stardustText.text);
-        int stardust = DivineMultiplayer.Instance.GetOpponentStardust();
+        int stardust = CardGameManager.Instance.GetOpponent().GetStardust();
         int stardustDiff = stardust - previousStardust;
         float stardustTimer;
-
-
 
         if (stardustDiff < 0)
         {
@@ -79,7 +78,6 @@ public class OpponentBankUI : MonoBehaviour
             changeStardustTextGradually.SetText(stardustTimer, stardust);
             GlowStardust(stardustDiff);
         }
-
     }
 
     public void SetLightText(int value)
