@@ -73,21 +73,20 @@ public class DeadStarBank : MonoBehaviour
         Status status = new Status();
         status.statusPower = 1;
         status.statusType = EffectTypeEnum.Strange;
-        List<BaseCard> myStars = PlayerPlayingField.Instance.GetAllPlayerExpertCards();
-        if(myStars.Count > 0) { 
-        BaseCard strangeTarget = ListUtility.GetRandomItemFromList(myStars);
+        List<BaseCard> myStars = PlayerPlayingField.Instance.GetAllPlayerExpertCards().Where(x => x.IsCardDestroyed() == false).ToList();
+        if(myStars.Count > 0) {
+            BaseCard strangeTarget = ListUtility.GetRandomItemFromList(myStars);
         strangeTarget.AddStatus(status);
         }
     }
     
     private void BlackHoleSuck()
     {
-        
         int blackHoleSuckLightValue = 1;
         player.SetLight(player.GetLight() - blackHoleSuckLightValue);
         List<BaseCard> aliveCards = baseCards.Where(x => !x.IsCardDestroyed()).ToList();
-        if (aliveCards.Count > 0) { 
-        BaseCard blackHoleTarget = ListUtility.GetRandomItemFromList(aliveCards);
+        if (aliveCards.Count > 0) {
+            BaseCard blackHoleTarget = ListUtility.GetRandomItemFromList(aliveCards);
             blackHoleTarget.BlackHoleApproach();
        
         }

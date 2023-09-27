@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.Collections;
+using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using static PlayerHand;
@@ -32,7 +33,17 @@ public class OpponentPlayingField : MonoBehaviour
 
     }
 
-   
+    public Transform GetFirstOpenExpertCardPosition()
+    {
+        foreach (Transform t in expertCardPositions)
+        {
+            if (t.childCount == 0)
+            {
+                return t;
+            }
+        }
+        return null;
+    }
 
     private void DivineMultiplayer_OnFieldCardsChanged(object sender, DivineMultiplayer.OnFieldCardsChangedEventArgs e)
     {
@@ -58,7 +69,7 @@ public class OpponentPlayingField : MonoBehaviour
         }
     }
 
-    private async void GetCardSOFromTitle(string title, CardTypeEnum cardType) {
+    public async void GetCardSOFromTitle(string title, CardTypeEnum cardType) {
 
         
         CardSO cardSO = await CardGenerator.Instance.CardNameToCardSO(title);
@@ -101,7 +112,7 @@ public class OpponentPlayingField : MonoBehaviour
         //{
             RectTransform rectTransform = 
                 cardCreated.gameObject.GetComponent<RectTransform>();
-            rectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
+            
         //}
         //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
         //{
@@ -111,6 +122,38 @@ public class OpponentPlayingField : MonoBehaviour
         
         cardCreated.SetCardGameArea(GameAreaEnum.OpponentField);
         
+    }
+
+    public async void  GetCardSOFromTitle(string title, PlayerEnum owner)
+    {
+
+        CardSO cardSO = await CardGenerator.Instance.CardNameToCardSO(title);
+        //generate card from cardSO
+
+
+
+        BaseCard baseCard = CardGenerator.Instance.GenerateCardFromCardSO(cardSO);
+        
+        
+        baseCard.GetComponent<NetworkObject>().Spawn();
+        //baseCard.InitializeOpponentCard(title);
+        //if (cardSO.cardType == CardTypeEnum.Civilization)
+        //{
+        //    RectTransform rectTransform = 
+        //        cardCreated.gameObject.GetComponent<RectTransform>();
+        //    rectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
+        //}
+        //else if (cardSO.cardType == CardTypeEnum.Expert)
+        //{
+
+        //}
+        //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
+        //{
+        //    subterfugeCardPlayed = true;
+        //    subterfugeCard = cardCreated;
+        //}
+
+
     }
 
     //private void Update()

@@ -93,6 +93,10 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
     private void SetLightServerRpc(int newValue)
     {
         playerTwoLight.Value = newValue;
+        if (newValue >= UniversalConstants.LIGHT_WIN_THRESHOLD)
+        {
+            CardGameManager.Instance.MatchEndServerRpc(PlayerEnum.PlayerTwo);
+        }
     }
 
     public int GetLight()

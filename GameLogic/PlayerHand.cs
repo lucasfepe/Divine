@@ -92,9 +92,14 @@ public class PlayerHand : NetworkBehaviour
         PlayerDeck.Instance.playerDeck.RemoveAt(PlayerDeck.Instance.playerDeck.Count - 1);
 
         //Will instantiate appropriate prefab given cardtype
-        BaseCard cardCreated = CardGenerator.Instance.GenerateCardFromCardSO(cardSO, transform);
-        cardCreated.SetCardOwner(Player.Instance.IAm());
-        cardCreated.SetCardGameArea(GameAreaEnum.Hand);
+        GameObject cardCreated = CardGenerator.Instance.GenerateLocalCardFromCardSO();
+        cardCreated.transform.SetParent(transform);
+
+        BaseCardLocal baseCardLocal = cardCreated.GetComponent<BaseCardLocal>();
+        baseCardLocal.SetCardSO(cardSO);
+       
+
+        baseCardLocal.SetCardGameArea(GameAreaEnum.Hand);
 
         OnDrawCard?.Invoke(this, EventArgs.Empty);
 

@@ -5,10 +5,7 @@ using UnityEngine;
 public class LoadingUI : MonoBehaviour
 {
 
-    private void Start()
-    {
-        OpponentHandResponsive.Instance.OnLoad += OpponentHandResponsive_OnLoad;
-    }
+    
 
     private void OpponentHandResponsive_OnLoad(object sender, System.EventArgs e)
     {

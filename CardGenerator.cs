@@ -13,9 +13,8 @@ using static UnityEngine.Rendering.DebugUI;
 
 public class CardGenerator : MonoBehaviour
 {
-    [SerializeField] private BaseCard subterfugeCardTemplate;
-    [SerializeField] private BaseCard expertCardTemplate;
-    [SerializeField] private BaseCard civilizationCardTemplate;
+    [SerializeField] private GameObject expertCardLocalTemplate;
+    [SerializeField] private GameObject expertCardTemplate;
     public static CardGenerator Instance { get; private set; }
     private List<Amazon.DynamoDBv2.DocumentModel.Document> documents;
     private void Awake()
@@ -23,15 +22,16 @@ public class CardGenerator : MonoBehaviour
         Instance = this;
     }
 
-    public event EventHandler<OnCardSOAssignedEventArgs> OnCardSOAssigned;
-    public class OnCardSOAssignedEventArgs : EventArgs
+   
+
+    public GameObject GenerateLocalCardFromCardSO()
     {
-        public BaseCard card;
+        return Instantiate(expertCardLocalTemplate);
     }
 
     public BaseCard GenerateCardFromCardSO(CardSO cardSO, Transform parent)
     {
-        BaseCard cardCreated = null;
+        GameObject cardCreated = null;
 
         //if (cardSO.cardType == CardTypeEnum.Civilization)
         //{
@@ -45,17 +45,39 @@ public class CardGenerator : MonoBehaviour
         //{
         //    cardCreated = Instantiate(subterfugeCardTemplate, parent);
         //}
-        
-        cardCreated.GetComponent<BaseCard>().SetCardSO(cardSO);
 
-        
+        BaseCard baseCard = cardCreated.GetComponent<BaseCard>();
+
+
         //Will trigger population of prefab with cardSO data
 
-        OnCardSOAssigned?.Invoke(this, new OnCardSOAssignedEventArgs
-        {
-            card = cardCreated.GetComponent<BaseCard>()
-        });
-        return cardCreated;
+
+        return baseCard;
+    }
+    public BaseCard GenerateCardFromCardSO(CardSO cardSO)
+    {
+        GameObject cardCreated = null;
+
+        //if (cardSO.cardType == CardTypeEnum.Civilization)
+        //{
+        //    cardCreated = Instantiate(civilizationCardTemplate, parent);
+        //}
+        //else if (cardSO.cardType == CardTypeEnum.Expert)
+        //{
+        cardCreated = Instantiate(expertCardTemplate);
+        //}
+        //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
+        //{
+        //    cardCreated = Instantiate(subterfugeCardTemplate, parent);
+        //}
+
+
+        BaseCard baseCard = cardCreated.GetComponent<BaseCard>();
+
+        //Will trigger population of prefab with cardSO data
+
+
+        return baseCard;
     }
 
     internal async Task<CardSO> CardNameToCardSO(string name)
@@ -98,4 +120,6 @@ public class CardGenerator : MonoBehaviour
         }
         return cardSO;
     }
+
+   
 }

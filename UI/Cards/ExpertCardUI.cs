@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class ExpertCardUI : CardUI
 {
     [SerializeField] private Image lifeTimeBar;
+    [SerializeField] private Image redGiantIconImage;
     [SerializeField] private TextMeshProUGUI lightText;
     [SerializeField] private TextMeshProUGUI lifetimeBarText;
     [SerializeField] private RectTransform lightRectTransform;
@@ -45,27 +46,26 @@ public class ExpertCardUI : CardUI
     override protected void Awake()
     {
         base.Awake();
+        if (redGiantIconImage != null) { 
+        redGiantIconImage.gameObject.SetActive(false);
+        }
         stardustTextGradualChange = stardustText.GetComponent<ChangeTextGradually>();
         lightTextGradualChange = lightText.GetComponent<ChangeTextGradually>();
 
     }
     //ugly when refactoring try to not use if to check a type of object the object type itself should be used based on inheritance/ interface
-    private void Start()
+
+
+
+    override protected void Card_OnCardSOAssigned(object sender, EventArgs e)
     {
-       
-        lifeTimeBar.fillAmount = 1;
-       
-        
-       
-        //SetText(toleranceText,GetExpertLevel().tolerance.ToString());
-       
-       
-        SetText(lifetimeBarText,card.GetCardSO().Lifetime.ToString());
-        
-      
+        base.Card_OnCardSOAssigned(sender,e);
+        SetText(lifetimeBarText, card.GetLifetime().ToString());
+        SetText(lightText, card.GetCardLight().ToString());
+        SetText(stardustText, card.GetCardStardust().ToString());
+
     }
 
-    
     private void SetText(TextMeshProUGUI textObject, string text)
     {
         
@@ -204,14 +204,20 @@ public class ExpertCardUI : CardUI
         ////update skill ui
         //RefreshSkills();
     }
-    
+
     //private ExpertLevel GetExpertLevel()
     //{
-        //return ((ExpertCard)card).GetExpertLevel();
+    //return ((ExpertCard)card).GetExpertLevel();
     //}
-    
 
 
+    override public void BecomeRedGiant()
+    {
+        base.BecomeRedGiant();
+        lifetimeBarText.text = string.Empty;
+        lifeTimeBar.gameObject.SetActive(false);
+        redGiantIconImage.gameObject.SetActive(true);
+    }
     public void RefreshLifetime()
     {
         int lifetime = ((ExpertCard)card).GetLifetime();
@@ -231,37 +237,21 @@ public class ExpertCardUI : CardUI
     }
     public void RefreshStardust()
     {
-        int stardust = ((ExpertCard)card).GetStardust();
+        int stardust = ((ExpertCard)card).GetCardStardust();
         SetText(stardustText, stardust.ToString());
     }
 
-    override public void RefreshUI()
-    {
-        //RefreshExperience();
-        RefreshLifetime();
-        RefreshLight();
-        RefreshStardust();
-        //SetText(lifetimeBarText,((ExpertCard)card).GetLifetime().ToString());
-        //lifeTimeBar.fillAmount = (float)((ExpertCard)card).GetLifetime() / card.GetCardSO().expertStatsObjectFromJson.lifeTime;
-    }
+    
     
     //Don't know if inheritance here is the best way to go
-    override protected void CardGenerator_OnCardSOAssigned(object sender, CardGenerator.OnCardSOAssignedEventArgs e)
-    {
-        if (e.card != card) { return; }
-        
-        base.CardGenerator_OnCardSOAssigned(sender, e);
-        lightText.text = card.GetCardLight().ToString();
-        stardustText.text = card.GetStardust().ToString();
-      
-    }
+    
 
     override public void RefreshStardustText()
     {
         float stardustTextGrowAnimationDuration = 1f;
-        stardustTextGradualChange.SetText(stardustTextGrowAnimationDuration, card.GetStardust());
-        bool valueIncreased = (Int32.Parse(stardustText.text) - card.GetStardust()) < 0;
-        bool valueDecreased = (Int32.Parse(stardustText.text) - card.GetStardust()) > 0;
+        stardustTextGradualChange.SetText(stardustTextGrowAnimationDuration, card.GetCardStardust());
+        bool valueIncreased = (Int32.Parse(stardustText.text) - card.GetCardStardust()) < 0;
+        bool valueDecreased = (Int32.Parse(stardustText.text) - card.GetCardStardust()) > 0;
         if (valueIncreased)
         {
             //only do text grow animation when value grows
@@ -275,10 +265,10 @@ public class ExpertCardUI : CardUI
     override public void RefreshLightText()
     {
         float lightTextRefreshAnimationDuration = 1f;
-        lightTextGradualChange.SetText(lightTextRefreshAnimationDuration, card.GetLight());
+        lightTextGradualChange.SetText(lightTextRefreshAnimationDuration, card.GetCardLight());
         //lightAnimator.SetTrigger(STARDUST_TEXT_INCREASE_TRIGGER);
-        bool valueIncreased = (Int32.Parse(lightText.text) - card.GetLight()) < 0;
-        bool valueDecreased = (Int32.Parse(lightText.text) - card.GetLight()) > 0;
+        bool valueIncreased = (Int32.Parse(lightText.text) - card.GetCardLight()) < 0;
+        bool valueDecreased = (Int32.Parse(lightText.text) - card.GetCardLight()) > 0;
         if (valueIncreased)
         {
             //only do text grow animation when value grows
@@ -653,7 +643,6 @@ public class ExpertCardUI : CardUI
         //quickLevelUpButtonRectTransform.anchoredPosition = new Vector2(0, 0);
         //quickLevelUpButtonRectTransform.sizeDelta = new Vector2(60, 60);
         //quickLevelUpButtonRectTransform.pivot = new Vector2(1, 1);
-
         stardustRectTransform.anchorMin = new Vector2(0, 1);
         stardustRectTransform.anchorMax = new Vector2(0, 1);
         stardustRectTransform.anchoredPosition = new Vector2(0, -177);

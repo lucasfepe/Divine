@@ -38,7 +38,37 @@ public class PlayerPlayingField : NetworkBehaviour
     //        }
     //    }
     //}
-    public void PlayCard(BaseCard card)
+    public List<Transform> GetExpertCardPositions()
+    {
+        return expertCardPositions;
+    }
+    public void PlaceCardInField()
+    {
+       
+    }
+    private bool HasOpenExpertCardPosition()
+    {
+        foreach (Transform t in expertCardPositions)
+        {
+            if (t.childCount == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    public Transform GetFirstOpenExpertCardPosition()
+    {
+        foreach (Transform t in expertCardPositions)
+        {
+            if (t.childCount == 0)
+            {
+                return t;
+            }
+        }
+        return null;
+    }
+    public void TryPlayCard(ICard card)
     {
         if (!CardGameManager.Instance.IsMyTurn())
         {
@@ -53,22 +83,13 @@ public class PlayerPlayingField : NetworkBehaviour
         //{
             if (CardGameManager.Instance.CanPlayExpertCardThisTurn())
             {
+            if (HasOpenExpertCardPosition()) {
                 CardGameManager.Instance.PlayedExpertCardThisTurn();
-                foreach (Transform t in expertCardPositions)
-                {
-                    if (t.childCount == 0)
-                    {
-                        OnPlayCard?.Invoke(this, EventArgs.Empty);
-                        card.SetCardGameArea(GameAreaEnum.Field);
-                        card.transform.SetParent(t);
-                        AddToFieldCardList(card.GetCardSO().Title);
-                        RectTransform rectTransform = card.transform.gameObject.GetComponent<RectTransform>();
-                        rectTransform.position = t.position;
-                        rectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
-                        break;
-                    }
-                }
+                OnPlayCard?.Invoke(this, EventArgs.Empty);
+                card.PlayCard();
             }
+
+        }
 
         //}
         //else if (cardSO.cardType == CardTypeEnum.Civilization)
@@ -217,7 +238,7 @@ public class PlayerPlayingField : NetworkBehaviour
         {
             if (InspectCardUI.Instance.GetActiveCard() is ExpertCard)
             {
-                position = expertCardPositions.FindIndex(x => x == InspectCardUI.Instance.GetActiveCard().GetPreviousParent());
+                position = expertCardPositions.FindIndex(x => x == ((BaseCard)InspectCardUI.Instance.GetActiveCard()).GetPreviousParent());
                 
             }
         }
@@ -230,7 +251,7 @@ public class PlayerPlayingField : NetworkBehaviour
                 expertCards.Add(expertCardPosition.GetChild(0).GetComponent<BaseCard>());
             }else if (iterationCount == position)
             {
-                expertCards.Add(InspectCardUI.Instance.GetActiveCard());
+                expertCards.Add(((BaseCard)InspectCardUI.Instance.GetActiveCard()));
             }
             iterationCount++;
         }

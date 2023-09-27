@@ -8,7 +8,7 @@ public class InspectCardUI : MonoBehaviour
     public static InspectCardUI Instance { get; private set; }
     [SerializeField] private Image background;
     [SerializeField] private Button closeButton;
-    private BaseCard activeCard;
+    private ICard activeCard;
     private bool isActiveCardMine;
 
     private void Awake()
@@ -19,12 +19,13 @@ public class InspectCardUI : MonoBehaviour
         closeButton.gameObject.SetActive(false);
     }
    
-    public void Show(BaseCard card)
+    public void Show(ICard card)
     {
         this.activeCard = card;
         background.gameObject.SetActive(true);
         closeButton.gameObject.SetActive(true);
     }
+    
     public void Hide()
     {
         if (background.isActiveAndEnabled) { 
@@ -38,8 +39,11 @@ public class InspectCardUI : MonoBehaviour
     {
         return activeCard != null && activeCard.IsCardMine();
     }
-    public BaseCard GetActiveCard()
+    public ICard GetActiveCard()
     {
         return activeCard;
     }
+    
+    
+    
 }

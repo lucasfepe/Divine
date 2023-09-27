@@ -82,21 +82,21 @@ public class CardGameManager : NetworkBehaviour
 
     
     [ServerRpc(RequireOwnership =false)]
-    private void MatchEndServerRpc(int winner)
+    public void MatchEndServerRpc(PlayerEnum winner)
     {
         MatchEndClientRpc(winner);
     }
     [ClientRpc]
-    private void MatchEndClientRpc(int winner)
+    private void MatchEndClientRpc(PlayerEnum winner)
     {
-        if(winner == 1)
+        if(winner == PlayerEnum.PlayerOne)
         {
             OnWin?.Invoke(this, new OnWinEventArgs
             {
                 playerEnum = PlayerEnum.PlayerOne
             });
         }
-        else
+        else if(winner == PlayerEnum.PlayerTwo)
         {
             OnWin?.Invoke(this, new OnWinEventArgs
             {
@@ -271,13 +271,13 @@ public class CardGameManager : NetworkBehaviour
 
     
 
-    public void PlayCard(BaseCard card)
-    {
-        player.SetStardust(player.GetStardust() - card.GetStardust());
-        player.SetLight(player.GetLight() + card.GetLight());
+    //public void PlayCard(BaseCard card)
+    //{
+    //    player.SetStardust(player.GetStardust() - card.GetStardust());
+    //    player.SetLight(player.GetLight() + card.GetLight());
        
-        card.GetCardUI().GlowLight();
-    }
+    //    card.GetCardUI().GlowLight();
+    //}
     public void GainStardust(int stardustGain)
     {
         player.SetStardust(player.GetStardust() + stardustGain);

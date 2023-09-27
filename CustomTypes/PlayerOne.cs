@@ -118,6 +118,10 @@ public class PlayerOne : NetworkBehaviour, IPlayer
     private void SetLightServerRpc(int newValue)
     {
         playerOneLight.Value = newValue;
+        if(newValue >= UniversalConstants.LIGHT_WIN_THRESHOLD)
+        {
+            CardGameManager.Instance.MatchEndServerRpc(PlayerEnum.PlayerOne);
+        }
     }
 
     public int GetLight()

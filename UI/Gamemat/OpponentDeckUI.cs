@@ -64,7 +64,7 @@ public class OpponentDeckUI : NetworkBehaviour
             Image image = Instantiate(cardBack, cards);
             image.transform.localPosition = new Vector2(UniversalConstants.CARD_PILE_OFFSET * i, UniversalConstants.CARD_PILE_OFFSET * i);
             //ugly don't do this instead use mehtod on an object don't pass object
-            OpponentHandResponsive.Instance.ResponsiveCard(image.GetComponent<RectTransform>());
+            
         }
         numberCardsText.transform.localPosition =
             new Vector2((PlayerDeck.Instance.totalCards - 1) * UniversalConstants.CARD_PILE_OFFSET, (PlayerDeck.Instance.totalCards - 1) * UniversalConstants.CARD_PILE_OFFSET);

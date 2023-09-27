@@ -10,7 +10,8 @@ public class CardUI : MonoBehaviour
     
     private const string ADDRESS_CARD_GRAPHICS = "Assets\\CardGraphics";
     [SerializeField] protected Button cardButton;
-    [SerializeField] protected BaseCard card;
+    protected ICard card;
+    [SerializeField] private RectTransform cardRectTransform;
     [SerializeField] protected TextMeshProUGUI titleText;
     [SerializeField] protected TextMeshProUGUI cardTypeText;
     [SerializeField] private Image characterImage;
@@ -25,14 +26,17 @@ public class CardUI : MonoBehaviour
     private InspectCardUI inspectCardUI;
     public static event EventHandler<OnPlayCardEventArgs> OnAnyPlayCard;
     private RectTransform titleRectTransform;
+    
     public class OnPlayCardEventArgs : EventArgs
     {
-        public BaseCard card;
+        public ICard card;
     }
     
 
     virtual protected void Awake()
     {
+        
+        card = transform.parent.parent.GetComponent<ICard>();
         titleRectTransform = titleText.GetComponent<RectTransform>();
         //Don't like using Find but only way as cannot put a object that's not prefab inside prefab to my knowledge
         inspectCardUI = GameObject.Find("InspectCardUI").GetComponent<InspectCardUI>();
@@ -46,13 +50,13 @@ public class CardUI : MonoBehaviour
         OnAnyPlayCard += CardUI_OnAnyPlayCard;
         //why do these not work when inside start
         //START happens after onnetwork spawn which is what invokes this esentailly
-        CardGenerator.Instance.OnCardSOAssigned += CardGenerator_OnCardSOAssigned; ;
+        card.OnCardSOAssigned += Card_OnCardSOAssigned;
         //this feels iffy but prevents having to write two functions that do the same thing
     }
 
-    virtual protected void CardGenerator_OnCardSOAssigned(object sender, CardGenerator.OnCardSOAssignedEventArgs e)
+    virtual protected void Card_OnCardSOAssigned(object sender, EventArgs e)
     {
-        if (e.card != card) { return; }
+        
         titleText.text = card.GetCardSO().Title.ToString();
         //cardTypeText.text = card.GetCardSO().cardType.ToString();
         switch (card.GetCardSO().Rank)
@@ -74,8 +78,11 @@ public class CardUI : MonoBehaviour
                 break;
 
         }
+
         GetImage();
     }
+
+    
 
     
 
@@ -90,6 +97,11 @@ public class CardUI : MonoBehaviour
                     ADDRESS_CARD_GRAPHICS
                     );
         characterImage.sprite = Image2SpriteUtility.Instance.LoadNewSprite(ADDRESS_CARD_GRAPHICS + "\\" + card.GetCardSO().ImageURL);
+    }
+    virtual public void BecomeRedGiant()
+    {
+        GetRedGiantImage();
+        
     }
     public async void GetRedGiantImage()
     {
@@ -114,7 +126,7 @@ public class CardUI : MonoBehaviour
         if (viableTarget.Locations.Contains(card.GetCardGameArea())
             && viableTarget.Ranks.Contains(card.GetCardSO().Rank))
         {
-            selectTargetInitiatorCard.TargetSelected(card);
+            selectTargetInitiatorCard.TargetSelected((BaseCard)card);
             CardGameManager.Instance.DoneSelectingTarget();
         }
     }
@@ -122,9 +134,11 @@ public class CardUI : MonoBehaviour
     virtual protected void CardUI_OnAnyPlayCard(object sender, OnPlayCardEventArgs e)
     {
         if (e.card != card) return;
-
-        if(card.GetCardGameArea() == GameAreaEnum.Field && card.IsGiant())
+        if(card is BaseCard)
+        Debug.Log("CardUI_OnAnyPlayCard is giant: " + ((BaseCard)card).IsGiant() + " game area;: " + card.GetCardGameArea());
+        if (card.GetCardGameArea() == GameAreaEnum.Field && ((BaseCard)card).IsGiant())
         {
+            Debug.Log("CardUI_OnAnyPlayCard: ");
             ((ExpertCard)card).UseSkill();
         }
 
@@ -138,25 +152,25 @@ public class CardUI : MonoBehaviour
         {
             SelectTarget();
         }
-        if(card.GetCardOwner() == Player.Instance.IAm()
-            && card.GetCardGameArea() == GameAreaEnum.Hand
-            && CardGameManager.Instance.IsMyTurn()) {
+        if (card.GetCardGameArea() == GameAreaEnum.Hand
+             && CardGameManager.Instance.IsMyTurn())
+        {
             //hide the inspect balloon
             //very ugly
             transform.parent.GetComponentInChildren<InspectHandUI>().Hide();
             //
-            if (CardGameManager.Instance.GetPlayer().GetStardust() >= card.GetStardust() && CardGameManager.Instance.CanPlayExpertCardThisTurn()) { 
-                PlayerPlayingField.Instance.PlayCard(card);
-                CardGameManager.Instance.PlayCard(card);
-                
-                
+            if (CardGameManager.Instance.GetPlayer().GetStardust() >= card.GetCardStardust() && CardGameManager.Instance.CanPlayExpertCardThisTurn())
+            {
+                PlayerPlayingField.Instance.TryPlayCard(card);
+
+
+
 
             }
         }
 
 
     }
-    virtual public void RefreshUI() { }
     
     public void TriggerOnAnyPlayCard()
     {
@@ -166,7 +180,7 @@ public class CardUI : MonoBehaviour
         });
     }
 
-    public BaseCard GetCard()
+    public ICard GetCard()
     {
         return card;
     }
@@ -191,12 +205,14 @@ public class CardUI : MonoBehaviour
     }
     private void AdaptLookForHand()
     {
-        
 
         titleRectTransform.anchoredPosition = new Vector2(0, 45.3f);
         titleText.fontSize = 25;
         titleText.gameObject.SetActive(true);
         cardTypeText.gameObject.SetActive(false);
+        ;
+        
+        cardRectTransform.localScale = new Vector2(UniversalConstants.HAND_CARD_SCALE, UniversalConstants.HAND_CARD_SCALE);
     }
     private void AdaptLookForInspect()
     {
@@ -204,6 +220,7 @@ public class CardUI : MonoBehaviour
         titleText.fontSize = 15;
         titleText.gameObject.SetActive(true);
         cardTypeText.gameObject.SetActive(false);
+        cardRectTransform.localScale = new Vector2(UniversalConstants.INSPECT_CARD_SCALE, UniversalConstants.INSPECT_CARD_SCALE);
     }
     private void AdaptLookForField()
     {
@@ -211,19 +228,34 @@ public class CardUI : MonoBehaviour
         titleText.fontSize = 25;
         titleText.gameObject.SetActive(true);
         cardTypeText.gameObject.SetActive(false);
-    }private void AdaptLookForOpponentField()
+        cardRectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
+    }
+    private void AdaptLookForOpponentField()
     {
         titleRectTransform.anchoredPosition = new Vector2(0, 45.3f);
         titleText.fontSize = 25;
         titleText.gameObject.SetActive(true);
         cardTypeText.gameObject.SetActive(false);
+        cardRectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
     }
 
     public void GlowLight()
     {
         
         lightIcon.GlowLight(card.GetCardLight());
+
+        //whenever a light glows it must also glow in the opponent's screen
+        //use a server/client rpc pair to accomplish this
+        //card only glows in field so okay to cast
+        //only call server rpc if I own the card otherwise infinite loop
+        if(((BaseCard)card).GetCardOwner() == Player.Instance.IAm())
+        {
+            ((BaseCard)card).GlowLightServerRpc();
+        }
+        
     }
+
+
 
     virtual public void RefreshStardustText( )
     {

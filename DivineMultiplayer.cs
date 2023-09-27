@@ -134,43 +134,11 @@ public class DivineMultiplayer : NetworkBehaviour
         });
     }
 
-    
-
-
-    [ServerRpc(RequireOwnership = false)]
-    internal void AbsorbServerRpc(int cardIndex, PlayerEnum owner)
-    {
-        AbsorbClientRpc(cardIndex, owner);
-    }
-    [ClientRpc]
-    private void AbsorbClientRpc(int cardIndex, PlayerEnum owner)
-    {
-        if (Player.Instance.IAm() == owner)
-        {
-            
-                BaseCard targetCard = PlayerPlayingField.Instance.GetAllPlayerExpertCards()[cardIndex];
-                Destroy(targetCard.gameObject);
-
-            
-            
-        }
-    }
+   
 
     
 
-    [ServerRpc(RequireOwnership = false)]
-    public void UpdateCardStardustInOpponentFieldServerRpc(int index, int value, PlayerEnum opponent)
-    {
-        UpdateCardStardustInOpponentFieldClientRpc(index, value, opponent);
-    }
-    [ClientRpc]
-    private void UpdateCardStardustInOpponentFieldClientRpc(int index, int value, PlayerEnum opponent)
-    {
-        if (Player.Instance.IAm() == opponent) {
-            OpponentPlayingField.Instance.GetAllOpponentExpertCards()[index].SetCardStardust(value);
-        }
-        
-    }
+    
 
     [ServerRpc(RequireOwnership = false)]
     public void UpdateCardLightInOpponentFieldServerRpc(int index, int value, PlayerEnum opponent)
@@ -183,8 +151,58 @@ public class DivineMultiplayer : NetworkBehaviour
         //error if tries to update the light (black hole) after the card has vanished
         if (Player.Instance.IAm() == opponent)
         {
-            OpponentPlayingField.Instance.GetAllOpponentExpertCards()[index].SetLight(value);
+            OpponentPlayingField.Instance.GetAllOpponentExpertCards()[index].SetCardLight(value);
         }
+
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void PlayCardServerRpc(string title, PlayerEnum owner)
+    {
+        //BaseCard baseCard = 
+        CreateCardInNetwork(title, owner);
+        
+
+
+
+    }
+
+    public async void CreateCardInNetwork(string title, PlayerEnum owner)
+    {
+
+        CardSO cardSO = await CardGenerator.Instance.CardNameToCardSO(title);
+        //generate card from cardSO
+
+        
+
+        BaseCard baseCard = CardGenerator.Instance.GenerateCardFromCardSO(cardSO);
+
+        
+        baseCard.GetComponent<NetworkObject>().Spawn();
+        baseCard.SetCardOwner(owner);
+        baseCard.SetCardStardust(cardSO.Stardust);
+        baseCard.SetCardLight(cardSO.Light);
+        baseCard.SetLifetime(cardSO.Lifetime);
+        baseCard.SetCardTitle(title);
+        
+        
+        //baseCard.InitializeOpponentCard(title);
+        //if (cardSO.cardType == CardTypeEnum.Civilization)
+        //{
+        //    RectTransform rectTransform = 
+        //        cardCreated.gameObject.GetComponent<RectTransform>();
+        //    rectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
+        //}
+        //else if (cardSO.cardType == CardTypeEnum.Expert)
+        //{
+
+        //}
+        //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
+        //{
+        //    subterfugeCardPlayed = true;
+        //    subterfugeCard = cardCreated;
+        //}
+
 
     }
 }
