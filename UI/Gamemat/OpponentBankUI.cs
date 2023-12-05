@@ -11,8 +11,8 @@ public class OpponentBankUI : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI lightText;
     [SerializeField] private TextMeshProUGUI stardustText;
-    [SerializeField] private RockShaderController stardust;
-    [SerializeField] private RockShaderController lightIcon;
+    [SerializeField] private GlowShaderController stardust;
+    [SerializeField] private GlowShaderController lightIcon;
     private ChangeTextGradually changeStardustTextGradually;
     private ChangeTextGradually changeLightTextGradually;
     private float speedUpWhenDecrease = 5f;
@@ -46,12 +46,12 @@ public class OpponentBankUI : MonoBehaviour
 
         if (lightDiff < 0)
         {
-            lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * lightDiff / speedUpWhenDecrease);
+            lightTimer = GlowShaderController.EnergyIntensityToPeriodStatic(-1 * lightDiff / speedUpWhenDecrease);
             changeLightTextGradually.SetText(lightTimer, lightValue);
         }
         else if (lightDiff > 0)
         {
-            lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(lightDiff);
+            lightTimer = GlowShaderController.EnergyIntensityToPeriodStatic(lightDiff);
             changeLightTextGradually.SetText(lightTimer, lightValue);
             GlowLight(lightDiff);
         }
@@ -67,15 +67,16 @@ public class OpponentBankUI : MonoBehaviour
 
         if (stardustDiff < 0)
         {
-            stardustTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff / speedUpWhenDecrease);
+            stardustTimer = GlowShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff / speedUpWhenDecrease);
 
             changeStardustTextGradually.SetText(stardustTimer, stardust);
         }
         else if (stardustDiff > 0)
         {
-            stardustTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff);
+            stardustTimer = GlowShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff);
 
             changeStardustTextGradually.SetText(stardustTimer, stardust);
+            if(!CardGameManager.Instance.isFirstTurn)
             GlowStardust(stardustDiff);
         }
     }

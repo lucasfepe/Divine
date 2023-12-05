@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -15,6 +16,9 @@ public class ChangeTextGradually : MonoBehaviour
     private bool isIncreasing = false;
     private int value=0;
     private int newValue=0;
+    public bool AdjustFontSizeBool = false;
+
+    public event EventHandler OnUpdateStatTextGradually;
 
     private void Awake()
     {
@@ -27,20 +31,46 @@ public class ChangeTextGradually : MonoBehaviour
                 subTimerCounter -= Time.deltaTime;
                 if(subTimerCounter <= 0)
                 {
+                int lengthb4change = text.text.Length;
                     if (isIncreasing)
                     {
+                        
                         text.text = (++value).ToString();
-                    }else
+                        
+                    }
+                else
                     {
                         text.text = (--value).ToString();
                     }
-                    subTimerCounter = subTimer;
+                int lengthafterchange = text.text.Length;
+                if(AdjustFontSizeBool && lengthafterchange !=  lengthb4change)
+                {
+                    AdjustFontSize();
+                }
+                
+                if (newValue == value) {
+                OnUpdateStatTextGradually?.Invoke(this, EventArgs.Empty);
+                }
+                subTimerCounter = subTimer;
                 }
         }
         
-        
-    }
 
+
+    }
+    private void AdjustFontSize()
+    {
+        if (text.text.Length > 1)
+        {
+            text.fontSize = 45;
+            text.characterSpacing = -10;
+        }
+        else if (text.text.Length == 1)
+        {
+            text.fontSize = 60;
+            text.characterSpacing = 0;
+        }
+    }
     public void SetText(float duration, int newValue)
     {
         this.newValue = newValue;
@@ -57,6 +87,7 @@ public class ChangeTextGradually : MonoBehaviour
         {
             isIncreasing = false;
         }
+        
     }
 
     

@@ -8,5 +8,7 @@ public enum GameAreaEnum
     Hand,
     Inspect,
     Field,
-    OpponentField
+    OpponentField,
+    CardPreview,
+    Catalogue
 }

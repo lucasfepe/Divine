@@ -27,11 +27,7 @@ public class OpponentPlayingField : MonoBehaviour
     {
         Instance = this;
     }
-    private void Start()
-    {
-        DivineMultiplayer.Instance.OnFieldCardsChanged += DivineMultiplayer_OnFieldCardsChanged;
-
-    }
+   
 
     public Transform GetFirstOpenExpertCardPosition()
     {
@@ -45,116 +41,7 @@ public class OpponentPlayingField : MonoBehaviour
         return null;
     }
 
-    private void DivineMultiplayer_OnFieldCardsChanged(object sender, DivineMultiplayer.OnFieldCardsChangedEventArgs e)
-    {
-        if ((e.playerEnum == PlayerEnum.PlayerOne && Player.Instance.IAm() == PlayerEnum.PlayerTwo)
-            ||
-            (e.playerEnum == PlayerEnum.PlayerTwo && Player.Instance.IAm() == PlayerEnum.PlayerOne)
-            )
-        {
-            switch(e.cardType)
-            {
-                case CardTypeEnum.Expert:
-                    //I need a cardSO from the card name
-                    GetCardSOFromTitle(e.cardName, CardTypeEnum.Expert);
-                    break;
-                case CardTypeEnum.Civilization:
-                    //I need a cardSO from the card name
-                    GetCardSOFromTitle(e.cardName, CardTypeEnum.Civilization);
-                    break;
-                case CardTypeEnum.Subterfuge:
-                    GetCardSOFromTitle(e.cardName, CardTypeEnum.Subterfuge);
-                    break;
-            }
-        }
-    }
-
-    public async void GetCardSOFromTitle(string title, CardTypeEnum cardType) {
-
-        
-        CardSO cardSO = await CardGenerator.Instance.CardNameToCardSO(title);
-        //generate card from cardSO
-        
-        Transform emptySlot = null;
-        switch (cardType)
-        {
-            case CardTypeEnum.Expert:
-                foreach (Transform t in expertCardPositions)
-                {
-                    if (t.childCount == 0)
-                    {
-                        emptySlot = t; break;
-                    }
-                }
-                break;
-            case CardTypeEnum.Civilization:
-                foreach (Transform t in civilizationCardPositions)
-                {
-                    if (t.childCount == 0)
-                    {
-                        emptySlot = t; break;
-                    }
-                }
-                break;
-            case CardTypeEnum.Subterfuge:
-                emptySlot = subterfugeCardPosition;
-                break;
-        }
-        BaseCard cardCreated = CardGenerator.Instance.GenerateCardFromCardSO(cardSO, emptySlot);
-        cardCreated.SetCardOwner(Player.Instance.OpponentIs());
-        //if (cardSO.cardType == CardTypeEnum.Civilization)
-        //{
-        //    RectTransform rectTransform = 
-        //        cardCreated.gameObject.GetComponent<RectTransform>();
-        //    rectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
-        //}
-        //else if (cardSO.cardType == CardTypeEnum.Expert)
-        //{
-            RectTransform rectTransform = 
-                cardCreated.gameObject.GetComponent<RectTransform>();
-            
-        //}
-        //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
-        //{
-        //    subterfugeCardPlayed = true;
-        //    subterfugeCard = cardCreated;
-        //}
-        
-        cardCreated.SetCardGameArea(GameAreaEnum.OpponentField);
-        
-    }
-
-    public async void  GetCardSOFromTitle(string title, PlayerEnum owner)
-    {
-
-        CardSO cardSO = await CardGenerator.Instance.CardNameToCardSO(title);
-        //generate card from cardSO
-
-
-
-        BaseCard baseCard = CardGenerator.Instance.GenerateCardFromCardSO(cardSO);
-        
-        
-        baseCard.GetComponent<NetworkObject>().Spawn();
-        //baseCard.InitializeOpponentCard(title);
-        //if (cardSO.cardType == CardTypeEnum.Civilization)
-        //{
-        //    RectTransform rectTransform = 
-        //        cardCreated.gameObject.GetComponent<RectTransform>();
-        //    rectTransform.localScale = new Vector2(UniversalConstants.FIELD_CARD_SCALE, UniversalConstants.FIELD_CARD_SCALE);
-        //}
-        //else if (cardSO.cardType == CardTypeEnum.Expert)
-        //{
-
-        //}
-        //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
-        //{
-        //    subterfugeCardPlayed = true;
-        //    subterfugeCard = cardCreated;
-        //}
-
-
-    }
+    
 
     //private void Update()
     //{

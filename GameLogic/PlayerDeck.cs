@@ -24,16 +24,11 @@ public class PlayerDeck : NetworkBehaviour
     public async void GetActiveDeck()
     {
         //Retrieve active deck name
-        GetItemResponse playerActiveDeckResponse = await DynamoDB.RetrieveActiveDeck("firstPlayer");
-        Dictionary<string, AttributeValue> playerActiveDeckItem = playerActiveDeckResponse.Item;
-        playerActiveDeckItem.TryGetValue("ActiveDeck", out AttributeValue value);
-        string playerActiveDeck = value.S;
-
+        
+        string playerActiveDeck = await LambdaManager.Instance.GetPlayerActiveDeckLambda();
         //retrive decks for this player
-        GetItemResponse playerDecksResponse = await DynamoDB.RetrievePlayerDecks("firstPlayer");
-
-        playerDecksResponse.Item.TryGetValue("Decks", out AttributeValue decksAttributeValue);
-        string decks = decksAttributeValue.S;
+        
+        string decks = await LambdaManager.Instance.GetPlayerDecksLambda();
         //Retrieve the active deck 
         Decks decksFromJson = JsonUtility.FromJson<Decks>(decks);
         List<DeckCard> cards = decksFromJson.decks
@@ -42,13 +37,11 @@ public class PlayerDeck : NetworkBehaviour
         //count how many cards
         totalCards = cards.Aggregate(0, (acc, x) => acc + x.count);
 
-        
-        
+
         //from card title to DivineCards item
 
         foreach (DeckCard deckCard in cards)
         {
-            
             for (int i = 0; i < deckCard.count; i++)
             {
                 CardSO cardSO = await CardGenerator.Instance.CardNameToCardSO(deckCard.title);

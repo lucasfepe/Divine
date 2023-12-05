@@ -77,12 +77,16 @@ public class PlayerHand : NetworkBehaviour
 
     private void DrawCard()
     {
+        if (PlayerDeck.Instance.totalCards == 0)
+        {
+            CardGameManager.Instance.MatchEndServerRpc(Player.Instance.OpponentIs());
+            return;
+        }
         if (loadingText.IsActive())
         {
             loadingText.Hide();
         }
         cardsOnHand++;
-
         //will update other player that this player drew a card
         SetCardsOnHandServerRpc(Player.Instance.IAm(), cardsOnHand);
         
@@ -128,6 +132,11 @@ public class PlayerHand : NetworkBehaviour
             DivineMultiplayer.Instance.playerTwoHandCards.Value = numberCards;
         }
     }
+    public List<BaseCardLocal> GetHandCards()
+    {
+        return GetComponentsInChildren<BaseCardLocal>().ToList();
+    }
+
 
     
 

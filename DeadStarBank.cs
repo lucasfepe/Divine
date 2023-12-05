@@ -6,67 +6,92 @@ using UnityEngine;
 
 public class DeadStarBank : MonoBehaviour
 {
+    private Dictionary<BaseCard,int> blackHoleTargets = new Dictionary<BaseCard,int>();
+
     public static DeadStarBank Instance { get; private set; }
     
     private List<BaseCard> baseCards;
     private IPlayer player;
+    private int whiteDwarvesToBeBirthed;
+    private int neutronStarsToBeBirthed;
+    private int blackHolesToBeBirthed;
 
     private void Awake()
     {
+        CardGameManager.Instance.OnBeginMatch += CardGameMaanger_OnBeginMatch;
+#if DEDICATED_SERVER
+        Debug.Log("DEDICATED_SERVER 6.8 dead star");
+
+#endif
         Instance = this;
     }
     private void Start()
     {
-        CardGameManager.Instance.OnBeginTurnStep2 += CardGameManger_OnBeginTurn;
-        CardGameManager.Instance.OnBeginMatch += CardGameMaanger_OnBeginMatch;
+        
+        
+        TurnPhaseStateMachine.Instance.OnTurnPhase_BlackHoleSuck += TurnPhaseStateMachine_OnTurnPhase_BlackHoleSuck;
+    }
+
+    private void TurnPhaseStateMachine_OnTurnPhase_BlackHoleSuck(object sender, System.EventArgs e)
+    {
+        blackHoleTargets = new Dictionary<BaseCard, int>();
+
+        baseCards = PlayerPlayingField.Instance.GetAllPlayerExpertCards();
+
+        for (int i = 0; i < player.GetBlackHole(); i++)
+        {
+            BlackHoleSuck();
+        }
+        foreach (KeyValuePair<BaseCard, int> blackHoleTarget in blackHoleTargets)
+        {
+            ((ExpertCard)blackHoleTarget.Key).IncreaseStatDecrement(blackHoleTarget.Value);
+            blackHoleTarget.Key.BlackHoleApproach();
+        }
+        ActionBirthWhiteDwarf();
+        ActionBirthNeutronStar();
+        ActionBirthBlackHole();
     }
 
     private void CardGameMaanger_OnBeginMatch(object sender, System.EventArgs e)
     {
         player = CardGameManager.Instance.GetPlayer();
-        
+
     }
 
     
 
-    private void CardGameManger_OnBeginTurn(object sender, System.EventArgs e)
-    {
-        baseCards = PlayerPlayingField.Instance.GetAllPlayerExpertCards();
-        player.SetLight(player.GetLight() + player.GetNeutronStar() * 10 + player.GetWhiteDwarf() * 5);
-        
-        for(int i = 0; i < player.GetBlackHole(); i++)
-        {
-            BlackHoleSuck();
-        }
-    }
+    
 
-    public void BirthBlackDwarf()
-    {
-        player.SetBlackDwarf(player.GetBlackDwarf() + 1);
-    }
+   
 
     public void BirthWhiteDwarf() {
-        player.SetWhiteDwarf(player.GetWhiteDwarf() + 1);
+        whiteDwarvesToBeBirthed++;
+        
+    }
+    private void ActionBirthWhiteDwarf()
+    {
+        player.SetWhiteDwarf(player.GetWhiteDwarf() + whiteDwarvesToBeBirthed);
+        whiteDwarvesToBeBirthed = 0;
     }
     public void BirthNeutronStar()
     {
-        if (player.GetNeutronStar() == 1)
-        {
-            player.SetNeutronStar(0);
-            
-            SpreadStrangeMatter();
-            BirthBlackHole();
-        }
-        else
-        {
-            player.SetNeutronStar(player.GetNeutronStar() + 1);
-        }
+        neutronStarsToBeBirthed++;
+    }
+    private void ActionBirthNeutronStar()
+    {
+        player.SetNeutronStar(player.GetNeutronStar() + neutronStarsToBeBirthed);
+        neutronStarsToBeBirthed = 0;
     }
     public void BirthBlackHole() {
-        player.SetBlackHole(player.GetBlackHole() + 1);
+        blackHolesToBeBirthed++;
+    }
+    private void ActionBirthBlackHole()
+    {
+        player.SetBlackHole(player.GetBlackHole() + blackHolesToBeBirthed);
+        blackHolesToBeBirthed = 0;
     }
 
-    
+
 
     private void SpreadStrangeMatter()
     {
@@ -76,19 +101,27 @@ public class DeadStarBank : MonoBehaviour
         List<BaseCard> myStars = PlayerPlayingField.Instance.GetAllPlayerExpertCards().Where(x => x.IsCardDestroyed() == false).ToList();
         if(myStars.Count > 0) {
             BaseCard strangeTarget = ListUtility.GetRandomItemFromList(myStars);
+
         strangeTarget.AddStatus(status);
         }
     }
     
     private void BlackHoleSuck()
     {
-        int blackHoleSuckLightValue = 1;
-        player.SetLight(player.GetLight() - blackHoleSuckLightValue);
+        
+        
         List<BaseCard> aliveCards = baseCards.Where(x => !x.IsCardDestroyed()).ToList();
         if (aliveCards.Count > 0) {
             BaseCard blackHoleTarget = ListUtility.GetRandomItemFromList(aliveCards);
-            blackHoleTarget.BlackHoleApproach();
-       
+            if(blackHoleTargets.TryGetValue(blackHoleTarget, out _))
+            {
+                blackHoleTargets[blackHoleTarget]++;
+            }
+            else
+            {
+                blackHoleTargets[blackHoleTarget] = 1;
+            };
+            
         }
     }
 }

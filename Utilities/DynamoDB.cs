@@ -9,7 +9,6 @@ using Amazon.DynamoDBv2.Model;
 using Amazon.DynamoDBv2.Model.Internal.MarshallTransformations;
 using Amazon.Runtime;
 using Amazon.Runtime.Internal;
-using Amazon.S3.Model;
 using UnityEngine;
 
 public class DynamoDB : MonoBehaviour
@@ -23,6 +22,8 @@ public class DynamoDB : MonoBehaviour
     private const string PLAYER_DECKS_TABLE_NAME = "PlayerDecks";
     private const string PLAYER_DECK_ACTIVE_TABLE_KEY = "Player";
     private const string PLAYER_DECKS_TABLE_KEY = "Player";
+    private const string PLAYER_CARDS_TABLE_KEY = "Player";
+    private const string PLAYER_CARDS_TABLE_NAME = "PlayerCards";
     private static AmazonDynamoDBClient client;
 
     private void Awake()
@@ -42,7 +43,15 @@ public class DynamoDB : MonoBehaviour
         };
         return await client.GetItemAsync(request);
     }
-
+    public static async Task<GetItemResponse> RetrievePlayerCards()
+    {
+        GetItemRequest request = new GetItemRequest
+        {
+            TableName = PLAYER_CARDS_TABLE_NAME,
+            Key = new Dictionary<string, AttributeValue>() { { PLAYER_CARDS_TABLE_KEY, new AttributeValue { S = "firstPlayer" } } },
+        };
+        return await client.GetItemAsync(request);
+    }
     public static async Task<GetItemResponse> RetrievePlayerDecks(string player)
     {
         GetItemRequest request = new GetItemRequest
@@ -52,6 +61,30 @@ public class DynamoDB : MonoBehaviour
         };
         return await client.GetItemAsync(request);
     }
+
+
+
+    public static async Task<UpdateItemResponse> UpdatePlayerDecks(string decks)
+    {
+        UpdateItemRequest request = new UpdateItemRequest
+        {
+            TableName = PLAYER_DECKS_TABLE_NAME,
+            Key = new Dictionary<string, AttributeValue>() { { PLAYER_DECKS_TABLE_KEY, new AttributeValue { S = "firstPlayer" } } },
+            ExpressionAttributeNames = new Dictionary<string, string>()
+            {
+                {"#D", "Decks"}
+            },
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+            {
+                {":d", new AttributeValue { S = decks} }
+            },
+            UpdateExpression = "SET #D = :d"
+        };
+        return await client.UpdateItemAsync(request);
+    }
+
+
+
     public static async Task<GetItemResponse> RetrieveDivineCard(string cardTitle)
     {
         GetItemRequest request = new GetItemRequest

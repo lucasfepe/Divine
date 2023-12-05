@@ -14,6 +14,9 @@ public static class SceneLoader
         GameScene,
         TutorialScene,
         LobbyScene,
+        DeckManagerScene,
+        CardCatalogueScene,
+        DeckEditorScene,
         CharacterSelectScene
     }
     private static Scene targetScene;
@@ -28,6 +31,7 @@ public static class SceneLoader
     }
     public static void LoadNetwork(Scene targetScene)
     {
+        Debug.LogWarning("@@@@@@@@@@@@@ALLoadNetworkTED");
         NetworkManager.Singleton.SceneManager.LoadScene(targetScene.ToString(), LoadSceneMode.Single);
     }
     public static void LoaderCallback()

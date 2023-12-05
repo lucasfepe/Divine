@@ -20,7 +20,10 @@ public class ExpertCardLocal : BaseCardLocal
     private int health;
     private bool isGiant = false;
 
-
+    override public void PlayCard()
+    {
+        base.PlayCard();
+    }
 
     override protected void Awake()
     {
@@ -37,7 +40,7 @@ public class ExpertCardLocal : BaseCardLocal
     {
        base.SetCardSO(cardSO);
         lifetime = cardSO.Lifetime;
-
+        SetRarityVisual();
         CallOnCardSOAssigned();
     }
 

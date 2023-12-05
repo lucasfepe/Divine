@@ -43,6 +43,10 @@ public class InspectCardUI : MonoBehaviour
     {
         return activeCard;
     }
+    public bool IsInspectingCard()
+    {
+        return activeCard != null;
+    }
     
     
     

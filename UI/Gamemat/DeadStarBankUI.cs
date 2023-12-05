@@ -7,7 +7,6 @@ using UnityEngine;
 public class DeadStarBankUI : MonoBehaviour
 {
     public static DeadStarBankUI Instance { get; private set; }
-    [SerializeField] private TextMeshProUGUI blackDwarfText;
     [SerializeField] private TextMeshProUGUI whiteDwarfText;
     [SerializeField] private TextMeshProUGUI neutronStarText;
     [SerializeField] private TextMeshProUGUI blackHoleText;
@@ -17,16 +16,16 @@ public class DeadStarBankUI : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
     }
     private void Start()
     {
-        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
+        
     }
     
     private void CardGameManager_OnBeginMatch(object sender, System.EventArgs e)
     {
         player = CardGameManager.Instance.GetPlayer();
-        player.OnSetMyBlackDwarf += IPlayer_OnSetMyBlackDwarf;
         player.OnSetMyWhiteDwarf += IPlayer_OnSetMyWhiteDwarf;
         player.OnSetMyNeutronStar += IPlayer_OnSetMyNeutronStar;
         player.OnSetMyBlackHole += IPlayer_OnSetMyBlackHole;
@@ -47,8 +46,5 @@ public class DeadStarBankUI : MonoBehaviour
         whiteDwarfText.text = player.GetWhiteDwarf().ToString();
     }
 
-    private void IPlayer_OnSetMyBlackDwarf(object sender, EventArgs e)
-    {
-        blackDwarfText.text = player.GetBlackDwarf().ToString();
-    }
+   
 }

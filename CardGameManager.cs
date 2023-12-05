@@ -1,11 +1,10 @@
-using Amazon.S3.Model;
+using Amazon.Lambda.Model;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using UnityEngine.SceneManagement;
 
 public class CardGameManager : NetworkBehaviour
 {
@@ -16,10 +15,10 @@ public class CardGameManager : NetworkBehaviour
     [SerializeField] private PlayerTwo playerTwo;
 
     public const int PROGRESS_BAR_MAX = 50;
-    
-    
-    
+    private bool willWipeOutBothFields = false;
 
+
+    private int initiatorIndex;
     private BaseCard initiator;
     //this is weird
     private int turn;
@@ -28,19 +27,25 @@ public class CardGameManager : NetworkBehaviour
     private bool isGameOver = false;
     private bool eurekaThisTurn = false;
     private bool isSelectingTarget = false;
-    public int stardustFromSupernova = 0;
+    private int tempStardustIncrement = 0;
     private IPlayer player;
     private IPlayer opponent;
-
-
+    private int cardsShedThisTurn;
+    private int cardsSupernovaThisTurn;
     
-    
-    public event EventHandler OnBeginTurn;
+
+    public event EventHandler OnDoneSelectingTarget;
+    public event EventHandler OnBeginSelectingTarget;
+    public event EventHandler<OnBeginTurnEventArgs> OnBeginTurn;
+    public class OnBeginTurnEventArgs: EventArgs
+    {
+        public bool firstTurn;
+    }
     public event EventHandler OnBeginTurnStep2;
     public event EventHandler OnEndTurn;
     public event EventHandler<OnWinEventArgs> OnWin;
     public event EventHandler OnBeginMatch;
-    
+    private bool playerTwoReady = false;
 
     public class OnWinEventArgs : EventArgs
     {
@@ -55,40 +60,77 @@ public class CardGameManager : NetworkBehaviour
         public BaseCard card;
         public int damage;
     }
-
+    public bool isFirstTurn = true;
     private void Awake()
     {
         Instance = this;
+
     }
+    private void Start()
+    {
+        AssignPlayer();
+
+
+
+    }
+
+    
+    public int GetInitiatorIndex()
+    {
+        return initiatorIndex;
+    }
+    
+
+
+
+
 
     public override void OnNetworkSpawn()
     {
-        if (IsHost)
+    }
+    public void AssignPlayerOne()
+    {
+        player = playerOne;
+        opponent = playerTwo;
+        Player.Instance.SetPlayerEnum(PlayerEnum.PlayerOne);
+    }
+    public void AssignPlayerTwo()
+    {
+        player = playerTwo;
+        opponent = playerOne;
+        Player.Instance.SetPlayerEnum(PlayerEnum.PlayerTwo);
+
+
+    }
+
+    
+    private void AssignPlayer()
+    {
+        if (MainMenuToGameStatic.playerNo == 1)
         {
-            player = playerOne;
-            opponent = playerTwo;
-                //gameObject.AddComponent<PlayerOne>();
+            AssignPlayerOne();
         }
-        else
+        else if (MainMenuToGameStatic.playerNo == 2)
         {
-            player = playerTwo;
-            opponent = playerOne;
-            //When the second player joins, begin the match
-            BeginMatchServerRpc();
-            
+            AssignPlayerTwo();
         }
+        Debug.Log("PAYERASSIGNED");
+        BeginMatch();
     }
 
 
-    
+
     [ServerRpc(RequireOwnership =false)]
     public void MatchEndServerRpc(PlayerEnum winner)
     {
+        NetworkManager.Singleton.Shutdown();
         MatchEndClientRpc(winner);
     }
     [ClientRpc]
     private void MatchEndClientRpc(PlayerEnum winner)
     {
+        Debug.Log("winner: " + winner);
+        FindObjectsOfType<BoxCollider2D>().ToList().ForEach(x => x.enabled = false);
         if(winner == PlayerEnum.PlayerOne)
         {
             OnWin?.Invoke(this, new OnWinEventArgs
@@ -103,6 +145,7 @@ public class CardGameManager : NetworkBehaviour
                 playerEnum = PlayerEnum.PlayerTwo
             });
         }
+        FindObjectOfType<KillNetMan>().KillNetManager();
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -112,40 +155,42 @@ public class CardGameManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void BeginTurnClientRpc(PlayerEnum playerEnum)
+    public void BeginTurnClientRpc(PlayerEnum playerEnum, bool firstTurn = false)
     {
-        if(playerEnum == Player.Instance.IAm()) {
+        isFirstTurn = firstTurn;
+        if (playerEnum == Player.Instance.IAm()) {
             return;
         }
-        OnBeginTurn?.Invoke(this, EventArgs.Empty);
-        OnBeginTurnStep2?.Invoke(this, EventArgs.Empty);
-        int stardustPerTurn = 5;
-        player.SetStardust(player.GetStardust() + stardustPerTurn + stardustFromSupernova);
+        isMyTurn = true;
+
+
+        OnBeginTurn?.Invoke(this, new OnBeginTurnEventArgs
+        {
+            firstTurn = firstTurn
+        });
+        //OnBeginTurnStep2?.Invoke(this, EventArgs.Empty);
+
+
         
-        BankUI.Instance.GlowStardust(stardustPerTurn + stardustFromSupernova);
-        stardustFromSupernova = 0;
         
         //OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
 
         turn++;
-        isMyTurn = true;
+        
 
         
 
-        List<BaseCard> playerCardsOnPlay = playerField.GetComponentsInChildren<BaseCard>().ToList();
+       
         //List<BaseCard> expertCards = playerField.GetComponentsInChildren<BaseCard>()
         //    .Where(x => x.GetCardSO().cardType == CardTypeEnum.Expert)
         //    .ToList();
         //List<BaseCard> civilizationCards = playerField.GetComponentsInChildren<BaseCard>()
         //    .Where(x => x.GetCardSO().cardType == CardTypeEnum.Civilization)
         //    .ToList();
-        int lightSumGeneration = playerCardsOnPlay.Select(x => x.GenerateLight()).Aggregate(0, (accumulatedLightSum, light) =>
-        {
-            accumulatedLightSum += light;
-            return accumulatedLightSum;
-        });
+        
         //set all at once instead of individually inside GenerateLight so the glow is proportinal to the whole gain
-        player.SetLight(player.GetLight() + lightSumGeneration);
+        
+        
         //update progress
         //if (Player.Instance.IAm() == PlayerEnum.PlayerOne)
         //{
@@ -165,6 +210,18 @@ public class CardGameManager : NetworkBehaviour
 
 
     }
+    public void AddToTurnLightIncrement(int value)
+    {
+        //turnLightIncrement += value;
+    }
+    public void AddToTempStardustIncrement(int value)
+    {
+        tempStardustIncrement += value;
+    }
+    
+    
+    
+
     public void EndTurn()
     {
         if (!isMyTurn)
@@ -184,18 +241,14 @@ public class CardGameManager : NetworkBehaviour
         
     
 
-    [ServerRpc(RequireOwnership =false)]
-    public void BeginMatchServerRpc()
+    
+   
+    public void BeginMatch()
     {
-        BeginMatchClientRpc();
         
-
-    }
-    [ClientRpc]
-    public void BeginMatchClientRpc()
-    {
         OnBeginMatch?.Invoke(this, EventArgs.Empty);
         PlayerDeck.Instance.GetActiveDeck();
+        
     }
     [ServerRpc(RequireOwnership =false)]
     public void ChoosePlayerToStartServerRpc()
@@ -216,6 +269,7 @@ public class CardGameManager : NetworkBehaviour
 
     public bool IsMyTurn()
     {
+        //ugly do I need this?
         return isMyTurn;
     }
     public bool CanPlayExpertCardThisTurn()
@@ -245,12 +299,57 @@ public class CardGameManager : NetworkBehaviour
     {
         return eurekaThisTurn;
     }
-    
-    public void BeginSelectingTarget(BaseCard initiator)
+    private bool shake = true;
+    public void BeginSelectingTarget(BaseCard initiator, bool shake = true, int initiatorIndex = 0)
     {
+        Debug.Log("baginselectintarget shake: " + shake);
         //InspectCardUI.Instance.Hide();
+        this.shake = shake;
         isSelectingTarget = true;
         this.initiator = initiator;
+        this.initiatorIndex = initiatorIndex;
+        if (shake)
+        {
+            Debug.Log("Done flash, begin selecting target;");
+            ((ExpertCardUI)initiator.GetCardUI()).DoneFlash();
+            ((ExpertCardUI)initiator.GetCardUI()).GetCardGraphicAnimator().BecomeAttacking();
+            initiator.BecomeAttackingServerRpc();
+            initiator.GetViableTargets()
+            .ForEach(x => {
+                //for me
+                //ugly can't I make this more unified...
+                ((ExpertCardUI)x.GetCardUI()).Flash();
+                ((ExpertCardUI)x.GetCardUI()).GetCardGraphicAnimator().BecomeTarget();
+
+                //for my opponent
+                x.BecomeTargetServerRpc();
+            });
+        }
+        else
+        {
+            Debug.Log("baginselectintarget not shke");
+            ((ExpertCardUI)initiator.GetCardUI()).LastingHighlight();
+
+            Debug.Log("viable target count: " + initiator.GetViableTargets().Count);
+            initiator.GetViableTargets()
+            .ForEach(x => {
+                //for me
+                //ugly can't I make this more unified...
+                Debug.Log("flash from not shaek");
+                ((ExpertCardUI)x.GetCardUI()).Flash();
+
+
+                //for my opponent
+                //x.BecomeTargetServerRpc();
+            });
+        }
+        //for my opponent
+        
+        //make all viable targets highlighted
+        
+        OnBeginSelectingTarget?.Invoke(this, EventArgs.Empty);
+
+
     }
 
     public bool IsSelectingTarget()
@@ -262,28 +361,43 @@ public class CardGameManager : NetworkBehaviour
     {
         return initiator;
     }
+    public void CancelSkill()
+    {
 
+        DoneSelectingTarget();
+    }
     internal void DoneSelectingTarget()
     {
+
+        //ugly feels dirty um too many calls to other objects and methods... can't this be done in the class itself?
+        ((ExpertCardUI)initiator.GetCardUI()).GetCardGraphicAnimator().StopAttacking();
+        //for my opponent
+        initiator.DoneAttackingServerRpc();
+
+        initiator.GetViableTargets()
+            .ForEach(x => {
+                //for me
+                if (!((ExpertCard)x).CanUseSkill())
+                {
+                    ((ExpertCardUI)x.GetCardUI()).DoneFlash();
+                    ((ExpertCardUI)x.GetCardUI()).GetCardGraphicAnimator().StopBeingTarget();
+                }
+                
+                
+
+                //for my opponent
+                x.StopBeingTargetServerRpc(Player.Instance.IAm());
+            });
+        if (!shake)
+        {
+            ((ExpertCardUI)initiator.GetCardUI()).EndLastingHighlight();
+        }
         initiator = null;
         isSelectingTarget = false;
+        OnDoneSelectingTarget?.Invoke(this, EventArgs.Empty);
     }
 
     
-
-    //public void PlayCard(BaseCard card)
-    //{
-    //    player.SetStardust(player.GetStardust() - card.GetStardust());
-    //    player.SetLight(player.GetLight() + card.GetLight());
-       
-    //    card.GetCardUI().GlowLight();
-    //}
-    public void GainStardust(int stardustGain)
-    {
-        player.SetStardust(player.GetStardust() + stardustGain);
-        BankUI.Instance.GlowStardust(stardustGain);
-        //OnUpdateBankedStardust?.Invoke(this, EventArgs.Empty);
-    }
 
     
 
@@ -295,5 +409,38 @@ public class CardGameManager : NetworkBehaviour
     public IPlayer GetOpponent()
     {
         return opponent;
+    }
+
+    public void CardShed()
+    {
+        cardsShedThisTurn++;
+        if(cardsShedThisTurn == TurnPhaseStateMachine.Instance.GetCardsThatCanShedCount())
+        {
+            player.SetStardust(player.GetStardust() + tempStardustIncrement);
+            cardsShedThisTurn = 0;
+            tempStardustIncrement = 0;
+        }
+    }
+    public void CardSupernova()
+    {
+        cardsSupernovaThisTurn++;
+        if (cardsSupernovaThisTurn == TurnPhaseStateMachine.Instance.GetCardsThatWillSupernovaCount())
+        {
+            player.SetStardust(player.GetStardust() + tempStardustIncrement);
+            cardsSupernovaThisTurn = 0;
+            tempStardustIncrement = 0;
+        }
+    }
+    public void WipeOutBothFields()
+    {
+        willWipeOutBothFields = true;
+    }
+    public bool WillWipeOutBothField()
+    {
+        return willWipeOutBothFields;
+    }
+    public void ResetWipeOutBothFields()
+    {
+        willWipeOutBothFields = false;
     }
 }
