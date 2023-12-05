@@ -1,9 +1,5 @@
-using Amazon.S3.Model;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -18,7 +14,8 @@ public class DivineMultiplayer : NetworkBehaviour
     public NetworkVariable<int> playerTwoDeckCards = new NetworkVariable<int>(-1);
     public NetworkVariable<int> playerOneHandCards = new NetworkVariable<int>(-1);
     public NetworkVariable<int> playerTwoHandCards = new NetworkVariable<int>(-1);
-   
+
+    public event EventHandler OnSpawnCard;
 
     public NetworkList<FixedString64Bytes> fieldExpertCardsPlayerOne;
     public NetworkList<FixedString64Bytes> fieldExpertCardsPlayerTwo;
@@ -39,13 +36,7 @@ public class DivineMultiplayer : NetworkBehaviour
     }
 
 
-    public event EventHandler<OnFieldCardsChangedEventArgs> OnFieldCardsChanged;
-    public class OnFieldCardsChangedEventArgs : EventArgs
-    {
-        public PlayerEnum playerEnum;
-        public CardTypeEnum cardType;
-        public string cardName;
-    }
+   
     
     private void Awake()
     {
@@ -72,20 +63,23 @@ public class DivineMultiplayer : NetworkBehaviour
     }
 
    
-    
+
 
     private void PlayersReady_OnValueChanged(bool previousValue, bool newValue)
     {
-        if (!IsHost)
+        if (!IsServer)
             return;
-            
-        
-        if(isPlayerOneReady.Value && isPlayerTwoReady.Value)
-        {
-            CardGameManager.Instance.ChoosePlayerToStartServerRpc();
-            //update player two on player one's deck card number
-            UpdatePlayerTwoOnPlayerOneDeckCardNumberServerRpc();
-        }
+
+
+    }
+    [ClientRpc]
+    private void PlayersReadyClientRpc()
+    {
+        if (CardGameManager.Instance.GetPlayer() is PlayerTwo)
+            return;
+        CardGameManager.Instance.ChoosePlayerToStartServerRpc();
+        //update player two on player one's deck card number
+        UpdatePlayerTwoOnPlayerOneDeckCardNumberServerRpc();
     }
 
     [ServerRpc(RequireOwnership =false)]
@@ -98,8 +92,13 @@ public class DivineMultiplayer : NetworkBehaviour
     {
         if(Player.Instance.IAm() == PlayerEnum.PlayerOne)
         {
-            playerOneDeckCards.Value = PlayerDeck.Instance.totalCards;
+            SetPlayerOneDeckCardsServerRpc(PlayerDeck.Instance.totalCards);
         }
+    }
+    [ServerRpc(RequireOwnership =false)]
+    private void SetPlayerOneDeckCardsServerRpc(int num)
+    {
+        playerOneDeckCards.Value = num;
     }
    
 
@@ -140,21 +139,8 @@ public class DivineMultiplayer : NetworkBehaviour
 
     
 
-    [ServerRpc(RequireOwnership = false)]
-    public void UpdateCardLightInOpponentFieldServerRpc(int index, int value, PlayerEnum opponent)
-    {
-        UpdateCardLightInOpponentFieldClientRpc(index, value, opponent);
-    }
-    [ClientRpc]
-    private void UpdateCardLightInOpponentFieldClientRpc(int index, int value, PlayerEnum opponent)
-    {
-        //error if tries to update the light (black hole) after the card has vanished
-        if (Player.Instance.IAm() == opponent)
-        {
-            OpponentPlayingField.Instance.GetAllOpponentExpertCards()[index].SetCardLight(value);
-        }
-
-    }
+   
+    
 
     [ServerRpc(RequireOwnership = false)]
     public void PlayCardServerRpc(string title, PlayerEnum owner)
@@ -166,7 +152,15 @@ public class DivineMultiplayer : NetworkBehaviour
 
 
     }
-
+    [ClientRpc]
+    private void OnSpawnCardClientRpc()
+    {
+        OnSpawnCard?.Invoke(this, EventArgs.Empty);
+    }
+    public void CallOnSpawnCard()
+    {
+        OnSpawnCard?.Invoke(this, EventArgs.Empty);
+    }
     public async void CreateCardInNetwork(string title, PlayerEnum owner)
     {
 
@@ -176,8 +170,8 @@ public class DivineMultiplayer : NetworkBehaviour
         
 
         BaseCard baseCard = CardGenerator.Instance.GenerateCardFromCardSO(cardSO);
-
         
+
         baseCard.GetComponent<NetworkObject>().Spawn();
         baseCard.SetCardOwner(owner);
         baseCard.SetCardStardust(cardSO.Stardust);
@@ -185,7 +179,10 @@ public class DivineMultiplayer : NetworkBehaviour
         baseCard.SetLifetime(cardSO.Lifetime);
         baseCard.SetCardTitle(title);
         
+        OnSpawnCard?.Invoke(this, EventArgs.Empty);
         
+        
+
         //baseCard.InitializeOpponentCard(title);
         //if (cardSO.cardType == CardTypeEnum.Civilization)
         //{

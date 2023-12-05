@@ -12,7 +12,6 @@ public class PlayerOne : NetworkBehaviour, IPlayer
     
     public NetworkVariable<int> playerOneStardust = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerOneLight = new NetworkVariable<int>(0);
-    public NetworkVariable<int> playerOneBlackDwarf = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerOneWhiteDwarf = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerOneNeutronStar = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerOneBlackHole = new NetworkVariable<int>(0);
@@ -23,8 +22,6 @@ public class PlayerOne : NetworkBehaviour, IPlayer
     public event EventHandler OnSetOpponentLight;
     public event EventHandler OnSetMyWhiteDwarf;
     public event EventHandler OnSetOpponentWhiteDwarf;
-    public event EventHandler OnSetMyBlackDwarf;
-    public event EventHandler OnSetOpponentBlackDwarf;
     public event EventHandler OnSetMyNeutronStar;
     public event EventHandler OnSetOpponentNeutronStar;
     public event EventHandler OnSetMyBlackHole;
@@ -34,7 +31,6 @@ public class PlayerOne : NetworkBehaviour, IPlayer
     {
         playerOneStardust.OnValueChanged += PlayerOneStardust_OnValueChanged;
         playerOneLight.OnValueChanged += PlayerOneLight_OnValueChanged;
-        playerOneBlackDwarf.OnValueChanged += PlayerOneBlackDwarf_OnValueChanged;
         playerOneWhiteDwarf.OnValueChanged += PlayerOneWhiteDwarf_OnValueChanged;
         playerOneNeutronStar.OnValueChanged += PlayerOneNeutronStar_OnValueChanged;
         playerOneBlackHole.OnValueChanged += PlayerOneBlackHole_OnValueChanged;
@@ -42,16 +38,15 @@ public class PlayerOne : NetworkBehaviour, IPlayer
 
     private void PlayerOneStardust_OnValueChanged(int previousValue, int newValue)
     {
+        //Debug.Log("CardGameManager.Instance: " + CardGameManager.Instance);
+        //Debug.Log("CardGameManager.Instance.GetPlayer(): " + CardGameManager.Instance.GetPlayer());
         CardGameManager.Instance.GetPlayer().UpdateStardustUIPlayerOne();
     }
     private void PlayerOneLight_OnValueChanged(int previousValue, int newValue)
     {
         CardGameManager.Instance.GetPlayer().UpdateLightUIPlayerOne();
     }
-    private void PlayerOneBlackDwarf_OnValueChanged(int previousValue, int newValue)
-    {
-        CardGameManager.Instance.GetPlayer().UpdateBlackDwarfUIPlayerOne();
-    }
+    
     private void PlayerOneWhiteDwarf_OnValueChanged(int previousValue, int newValue)
     {
         CardGameManager.Instance.GetPlayer().UpdateWhiteDwarfUIPlayerOne();
@@ -83,19 +78,14 @@ public class PlayerOne : NetworkBehaviour, IPlayer
     {
         OnSetOpponentLight?.Invoke(this, EventArgs.Empty);
     }
-    public void UpdateBlackDwarfUIPlayerOne()
-    {
-        OnSetMyBlackDwarf?.Invoke(this, EventArgs.Empty);
-    }
-    public void UpdateBlackDwarfUIPlayerTwo()
-    {
-        OnSetOpponentBlackDwarf?.Invoke(this, EventArgs.Empty);
-    }
+    
+    
 
     //ugly this is literally duplicated in playerTwo
     //but like you need it in both places so idk
     public void SetStardust(int newValue)
     {
+
         SetStardustServerRpc(newValue);
     }
     public int GetStardust()
@@ -120,6 +110,7 @@ public class PlayerOne : NetworkBehaviour, IPlayer
         playerOneLight.Value = newValue;
         if(newValue >= UniversalConstants.LIGHT_WIN_THRESHOLD)
         {
+            Debug.Log("p[layeronewin");
             CardGameManager.Instance.MatchEndServerRpc(PlayerEnum.PlayerOne);
         }
     }
@@ -129,16 +120,9 @@ public class PlayerOne : NetworkBehaviour, IPlayer
         return playerOneLight.Value;
     }
 
-    public void SetBlackDwarf(int newValue)
-    {
-        SetBlackDwarfServerRpc(newValue);
-    }
+    
 
-    [ServerRpc(RequireOwnership = false)]
-    private void SetBlackDwarfServerRpc(int newValue)
-    {
-        playerOneBlackDwarf.Value = newValue;
-    }
+   
 
     public void SetWhiteDwarf(int newValue)
     {
@@ -173,10 +157,7 @@ public class PlayerOne : NetworkBehaviour, IPlayer
         playerOneBlackHole.Value = newValue;
     }
 
-    public int GetBlackDwarf()
-    {
-        return playerOneBlackDwarf.Value;
-    }
+    
 
     public int GetWhiteDwarf()
     {

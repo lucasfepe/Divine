@@ -8,7 +8,6 @@ using UnityEngine;
 public class OpponentDeadStarBankUI : MonoBehaviour
 {
     public static OpponentDeadStarBankUI Instance { get; private set; }
-    [SerializeField] private TextMeshProUGUI blackDwarfText;
     [SerializeField] private TextMeshProUGUI whiteDwarfText;
     [SerializeField] private TextMeshProUGUI neutronStarText;
     [SerializeField] private TextMeshProUGUI blackHoleText;
@@ -19,15 +18,17 @@ public class OpponentDeadStarBankUI : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
     }
     private void Start()
     {
-        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
+        
     }
     //ugly this is so similar of deadstarbank can't you somehow not have two classes that are the same
     //not really because they are listening to different events...
     private void CardGameManager_OnBeginMatch(object sender, System.EventArgs e)
     {
+        
         //I am indicating the opponent information though both the fact that I am referencing the opponent player and the fact of listening to the Opponent event
         //Can't I get rid of one of them?
         //like opponnet.OnSetBlackDwarf....
@@ -36,7 +37,6 @@ public class OpponentDeadStarBankUI : MonoBehaviour
         //i don't think so because on value change happens for both players
         player = CardGameManager.Instance.GetPlayer();
         opponent = CardGameManager.Instance.GetOpponent();
-        player.OnSetOpponentBlackDwarf += IPlayer_OnSetOpponentBlackDwarf;
         player.OnSetOpponentWhiteDwarf += IPlayer_OnSetOpponentWhiteDwarf;
         player.OnSetOpponentNeutronStar += IPlayer_OnSetOpponentNeutronStar;
         player.OnSetOpponentBlackHole += IPlayer_OnSetOpponentBlackHole;
@@ -57,10 +57,7 @@ public class OpponentDeadStarBankUI : MonoBehaviour
         whiteDwarfText.text = opponent.GetWhiteDwarf().ToString();
     }
 
-    private void IPlayer_OnSetOpponentBlackDwarf(object sender, System.EventArgs e)
-    {
-        blackDwarfText.text = opponent.GetBlackDwarf().ToString();
-    }
+    
 
 
 }

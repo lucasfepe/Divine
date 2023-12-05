@@ -29,31 +29,7 @@ public class CardGenerator : MonoBehaviour
         return Instantiate(expertCardLocalTemplate);
     }
 
-    public BaseCard GenerateCardFromCardSO(CardSO cardSO, Transform parent)
-    {
-        GameObject cardCreated = null;
-
-        //if (cardSO.cardType == CardTypeEnum.Civilization)
-        //{
-        //    cardCreated = Instantiate(civilizationCardTemplate, parent);
-        //}
-        //else if (cardSO.cardType == CardTypeEnum.Expert)
-        //{
-            cardCreated = Instantiate(expertCardTemplate, parent);
-        //}
-        //else if (cardSO.cardType == CardTypeEnum.Subterfuge)
-        //{
-        //    cardCreated = Instantiate(subterfugeCardTemplate, parent);
-        //}
-
-        BaseCard baseCard = cardCreated.GetComponent<BaseCard>();
-
-
-        //Will trigger population of prefab with cardSO data
-
-
-        return baseCard;
-    }
+    
     public BaseCard GenerateCardFromCardSO(CardSO cardSO)
     {
         GameObject cardCreated = null;
@@ -114,6 +90,16 @@ public class CardGenerator : MonoBehaviour
                 case "RedGiantEffect":
                     cardSO.GiantEffect = JsonUtility.FromJson<GiantEffect>(divineCard[attribute].S);
                     break;
+                case "Shed":
+                    cardSO.Shed = Int32.Parse(divineCard[attribute].N);
+                    break;
+                case "Rarity":
+                    cardSO.Rarity = (RarityEnum)Enum.Parse(typeof(RarityEnum), divineCard[attribute].N);
+                    break;
+                case "Collection":
+                    cardSO.Collection = (CollectionsEnum)Enum.Parse(typeof(CollectionsEnum), divineCard[attribute].N);
+                    break;
+
 
 
             }

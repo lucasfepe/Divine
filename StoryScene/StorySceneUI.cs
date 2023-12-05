@@ -21,9 +21,10 @@ public class StorySceneUI : MonoBehaviour
 
     private void ShowNextSet()
     {
-        if(activeSet == sets.Count - 2)
+        if(activeSet == sets.Count - 1)
         {
             SceneLoader.Load(SceneLoader.Scene.TutorialScene);
+            return;
         }
         sets.ElementAt(++activeSet).SetActive(true);
     }

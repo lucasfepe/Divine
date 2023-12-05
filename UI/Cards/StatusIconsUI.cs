@@ -1,6 +1,7 @@
 using Mono.CSharp.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,11 +17,13 @@ public class StatusIconsUI : MonoBehaviour
 
     public void AddStatusIcon(Status status)
     {
-        List<RockShaderController> icons = new List<RockShaderController>();
+        List<GlowShaderController> icons = new List<GlowShaderController>();
         GameObject newIcon = Instantiate(iconTemplate, transform);
+        StatusInfo statusInfo = newIcon.GetComponent<StatusInfo>();
+        statusInfo.SetStatusType(status.statusType);
         newIcon.SetActive(true);
-        GameObject statusIcon = newIcon.GetComponentInChildren<RockShaderController>().gameObject;
-        RockShaderController rockShaderController = statusIcon.GetComponentInChildren<RockShaderController>();
+        GameObject statusIcon = newIcon.GetComponentInChildren<GlowShaderController>().gameObject;
+        GlowShaderController rockShaderController = statusIcon.GetComponentInChildren<GlowShaderController>();
         icons.Add(rockShaderController);
         Image image = statusIcon.GetComponentInChildren<Image>();
         image.sprite = Image2SpriteUtility.Instance.GetSkillEffectIconSprite(status.statusType);
@@ -36,6 +39,35 @@ public class StatusIconsUI : MonoBehaviour
                 image.material = materialCopy;
                 rockShaderController.SetMaterial(materialCopy);
                 break;
+            case EffectTypeEnum.NoBlackHole:
+                material = Resources.Load<Material>("NoBlackHoleStatusMaterial");
+                //create copy
+                materialCopy = new Material(material);
+                image.material = materialCopy;
+                rockShaderController.SetMaterial(materialCopy);
+                break;
+            case EffectTypeEnum.Dim:
+                material = Resources.Load<Material>("DimStatusMaterial");
+                //create copy
+                materialCopy = new Material(material);
+                image.material = materialCopy;
+                rockShaderController.SetMaterial(materialCopy);
+                break;
+            case EffectTypeEnum.Gemini:
+                material = Resources.Load<Material>("GeminiStatusMaterial");
+                //create copy
+                materialCopy = new Material(material);
+                image.material = materialCopy;
+                rockShaderController.SetMaterial(materialCopy);
+                break;
+            case EffectTypeEnum.Untargetable:
+                material = Resources.Load<Material>("UntargetableStatusMaterial");
+                //create copy
+                materialCopy = new Material(material);
+                image.material = materialCopy;
+                rockShaderController.SetMaterial(materialCopy);
+                break;
+
                 //case EffectTypeEnum.BonusEnergy:
                 //     material = Resources.Load<Material>("InspiredStatusMaterial");
                 //    //create copy
@@ -63,15 +95,17 @@ public class StatusIconsUI : MonoBehaviour
             rt.offsetMax = new Vector2(-i * offset, -i * offset);
             newIconLevel.transform.SetSiblingIndex(newIconLevel.transform.GetSiblingIndex() - i);
             
-            icons.Add(statusIcon.GetComponent<RockShaderController>());
+            icons.Add(statusIcon.GetComponent<GlowShaderController>());
         }
         icons.ForEach(x => x.GlowFastAndBright());
 
         
     }
-    public void RemoveStatusIcon(int index) {
+    public void RemoveStatusIcon(EffectTypeEnum effectType) {
+
+
         //the first one is the template
-        Destroy(transform.GetChild(index + 1).gameObject);
+        Destroy(transform.GetComponentsInChildren<StatusInfo>().ToList().Where(x => x.GetStatusType() == effectType).First().gameObject);
     }
 
 }

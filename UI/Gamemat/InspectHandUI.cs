@@ -15,6 +15,7 @@ public class InspectHandUI : MonoBehaviour
         card = transform.parent.GetComponentInParent<BaseCardLocal>();
         inspectButton.onClick.AddListener(() =>
         {
+            Hide();
             card.InspectCard();
         });
     }
@@ -23,7 +24,12 @@ public class InspectHandUI : MonoBehaviour
         card.OnCardHoverEnter += Card_OnCardHoverEnter;
         card.OnCardHoverExit += Card_OnCardHoverExit;
     }
+    private void OnDestroy()
+    {
+        card.OnCardHoverEnter -= Card_OnCardHoverEnter;
+        card.OnCardHoverExit -= Card_OnCardHoverExit;
 
+    }
     private void Card_OnCardHoverExit(object sender, EventArgs e)
     {
         Hide();
@@ -31,12 +37,13 @@ public class InspectHandUI : MonoBehaviour
 
     private void Card_OnCardHoverEnter(object sender, EventArgs e)
     {
-        if (card.GetCardGameArea() == GameAreaEnum.Inspect) { return; }
+        if (card.GetCardGameArea() == GameAreaEnum.Inspect) {  return; }
         Show();
     }
 
     private void OnMouseOver()
     {
+        
         if (card.GetCardGameArea() == GameAreaEnum.Inspect) { return; }
         Show();
     }
@@ -44,7 +51,7 @@ public class InspectHandUI : MonoBehaviour
     {
         Hide();
     }
-    public void Hide() { 
+    public void Hide() {
     inspectContainer.SetActive(false);
     }
     private void Show()

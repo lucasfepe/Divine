@@ -12,8 +12,8 @@ public class BankUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI lightText;
     [SerializeField] private float speedUpWhenDecrease = 5f;
 
-    [SerializeField] private RockShaderController stardust;
-    [SerializeField] private RockShaderController lightIcon;
+    [SerializeField] private GlowShaderController stardust;
+    [SerializeField] private GlowShaderController lightIcon;
 
     private ChangeTextGradually changeStardustTextGradually;
     private ChangeTextGradually changeLightTextGradually;
@@ -25,10 +25,11 @@ public class BankUI : MonoBehaviour
         Instance = this;
         changeStardustTextGradually = stardustText.GetComponent<ChangeTextGradually>();
         changeLightTextGradually = lightText.GetComponent<ChangeTextGradually>();
+        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
     }
     private void Start()
     {
-        CardGameManager.Instance.OnBeginMatch += CardGameManager_OnBeginMatch;
+        
     }
 
     private void CardGameManager_OnBeginMatch(object sender, EventArgs e)
@@ -42,15 +43,14 @@ public class BankUI : MonoBehaviour
         int previousLight = Int32.Parse(lightText.text);
         int lightValue = CardGameManager.Instance.GetPlayer().GetLight();
         int lightDiff = lightValue - previousLight;
-
         if (lightDiff < 0)
         {
-            lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * lightDiff / speedUpWhenDecrease);
+            lightTimer = GlowShaderController.EnergyIntensityToPeriodStatic(-1 * lightDiff / speedUpWhenDecrease);
             changeLightTextGradually.SetText(lightTimer, lightValue);
         }
         else if (lightDiff > 0)
         {
-            lightTimer = RockShaderController.EnergyIntensityToPeriodStatic(lightDiff);
+            lightTimer = GlowShaderController.EnergyIntensityToPeriodStatic(lightDiff);
             changeLightTextGradually.SetText(lightTimer, lightValue);
             GlowLight(lightDiff);
         }
@@ -65,13 +65,13 @@ public class BankUI : MonoBehaviour
 
         if (stardustDiff < 0)
         {
-            stardustTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff / speedUpWhenDecrease);
+            stardustTimer = GlowShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff / speedUpWhenDecrease);
 
             changeStardustTextGradually.SetText(stardustTimer, stardust);
         }
         else if (stardustDiff > 0)
         {
-            stardustTimer = RockShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff);
+            stardustTimer = GlowShaderController.EnergyIntensityToPeriodStatic(-1 * stardustDiff);
 
             changeStardustTextGradually.SetText(stardustTimer, stardust);
         }
@@ -96,5 +96,8 @@ public class BankUI : MonoBehaviour
         lightIcon.Glow(lightGen, dimmingFactor);
     }
 
-
+    public GlowShaderController GetStardustGlowShaderController()
+    {
+        return stardust;
+    }
 }

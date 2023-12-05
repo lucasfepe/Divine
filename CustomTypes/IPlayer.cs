@@ -9,11 +9,9 @@ public interface IPlayer
     int GetStardust();
     void SetLight(int newValue);
     int GetLight();
-    void SetBlackDwarf(int newValue);
     void SetWhiteDwarf(int newValue);
     void SetNeutronStar(int newValue);
     void SetBlackHole(int newValue);
-    int GetBlackDwarf();
     int GetWhiteDwarf();
     int GetNeutronStar();
     int GetBlackHole();
@@ -22,11 +20,9 @@ public interface IPlayer
     void UpdateStardustUIPlayerTwo();
     void UpdateLightUIPlayerOne();
     void UpdateLightUIPlayerTwo();
-    void UpdateBlackDwarfUIPlayerOne();
     void UpdateWhiteDwarfUIPlayerOne();
     void UpdateNeutronStarUIPlayerOne();
     void UpdateBlackHoleUIPlayerOne();
-    void UpdateBlackDwarfUIPlayerTwo();
     void UpdateWhiteDwarfUIPlayerTwo();
     void UpdateNeutronStarUIPlayerTwo();
     void UpdateBlackHoleUIPlayerTwo();
@@ -37,8 +33,6 @@ public interface IPlayer
     public event EventHandler OnSetOpponentLight;
     public event EventHandler OnSetMyWhiteDwarf;
     public event EventHandler OnSetOpponentWhiteDwarf;
-    public event EventHandler OnSetMyBlackDwarf;
-    public event EventHandler OnSetOpponentBlackDwarf;
     public event EventHandler OnSetMyNeutronStar;
     public event EventHandler OnSetOpponentNeutronStar;
     public event EventHandler OnSetMyBlackHole;

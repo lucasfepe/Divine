@@ -20,6 +20,9 @@ public class CardSO : ScriptableObject
     public int Lifetime;
     public int Stardust;
     public int Light;
+    public int Shed;
+    public RarityEnum Rarity;
+    public CollectionsEnum Collection;
    
 
     

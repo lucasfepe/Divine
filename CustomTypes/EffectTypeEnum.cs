@@ -9,7 +9,17 @@ public enum EffectTypeEnum
 {
     Null,
     Absorb,
-    Strange
+    Strange,
+    Injure,
+    Untargetable,
+    GenerateLight,
+    Dim,
+    Uphold,
+    Discount,
+    NoBlackHole,
+    Expensive,
+    WipeoutBothFields,
+    Gemini
     
 
 

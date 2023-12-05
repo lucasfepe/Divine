@@ -12,36 +12,9 @@ public class Image2SpriteUtility : MonoBehaviour
     {
         Instance = this;
     }
-    public Sprite GetLongTablet()
-    {
-        return Resources.Load<Sprite>("tabletHorizontal");
-    }
-    public Sprite GetTallTablet()
-    {
-        return Resources.Load<Sprite>("tabletVertical");
-    }
+    
 
-    public Sprite GetStatIconSprite(RankEnum stat)
-    {
-        Sprite sprite = null;
-        switch (stat)
-        {
-            case RankEnum.Brawn:
-                sprite = Resources.Load<Sprite>("redRock");
-                break;
-            case RankEnum.Art:
-                sprite = Resources.Load<Sprite>("yellowRock");
-                break;
-            case RankEnum.Science:
-                sprite = Resources.Load<Sprite>("greenRock");
-                break;
-            case RankEnum.Philosophy:
-                sprite = Resources.Load<Sprite>("blueRock");
-                break;
-           
-        }
-        return sprite;
-    }
+   
     public Sprite GetSkillEffectIconSprite(EffectTypeEnum effectType)
     {
         Sprite sprite = null;

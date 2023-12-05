@@ -11,4 +11,5 @@ public class ExpertAction
     public ViableTarget ViableTarget;
     public int NumberTargets;
     public PreferenceEnum Preference;
+    public string Twin;
 }

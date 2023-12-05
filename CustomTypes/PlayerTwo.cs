@@ -8,7 +8,6 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
 {
     public NetworkVariable<int> playerTwoStardust = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerTwoLight = new NetworkVariable<int>(0);
-    public NetworkVariable<int> playerTwoBlackDwarf = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerTwoWhiteDwarf = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerTwoNeutronStar = new NetworkVariable<int>(0);
     public NetworkVariable<int> playerTwoBlackHole = new NetworkVariable<int>(0);
@@ -19,8 +18,6 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
     public event EventHandler OnSetOpponentLight;
     public event EventHandler OnSetMyWhiteDwarf;
     public event EventHandler OnSetOpponentWhiteDwarf;
-    public event EventHandler OnSetMyBlackDwarf;
-    public event EventHandler OnSetOpponentBlackDwarf;
     public event EventHandler OnSetMyNeutronStar;
     public event EventHandler OnSetOpponentNeutronStar;
     public event EventHandler OnSetMyBlackHole;
@@ -30,7 +27,6 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
     {
         playerTwoStardust.OnValueChanged += PlayerTwoStardust_OnValueChanged;
         playerTwoLight.OnValueChanged += PlayerTwoLight_OnValueChanged;
-        playerTwoBlackDwarf.OnValueChanged += PlayerTwoBlackDwarf_OnValueChanged;
         playerTwoWhiteDwarf.OnValueChanged += PlayerTwoWhiteDwarf_OnValueChanged;
         playerTwoNeutronStar.OnValueChanged += PlayerTwoNeutronStar_OnValueChanged;
         playerTwoBlackHole.OnValueChanged += PlayerTwoBlackHole_OnValueChanged;
@@ -44,10 +40,7 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
     {
         CardGameManager.Instance.GetPlayer().UpdateLightUIPlayerTwo();
     }
-    private void PlayerTwoBlackDwarf_OnValueChanged(int previousValue, int newValue)
-    {
-        CardGameManager.Instance.GetPlayer().UpdateBlackDwarfUIPlayerTwo();
-    }
+   
     private void PlayerTwoWhiteDwarf_OnValueChanged(int previousValue, int newValue)
     {
         CardGameManager.Instance.GetPlayer().UpdateWhiteDwarfUIPlayerTwo();
@@ -95,6 +88,7 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
         playerTwoLight.Value = newValue;
         if (newValue >= UniversalConstants.LIGHT_WIN_THRESHOLD)
         {
+            Debug.Log("p[layertwowin");
             CardGameManager.Instance.MatchEndServerRpc(PlayerEnum.PlayerTwo);
         }
     }
@@ -113,10 +107,7 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
     {
         OnSetMyLight?.Invoke(this, EventArgs.Empty);
     }
-    public int GetBlackDwarf()
-    {
-        return playerTwoBlackDwarf.Value;
-    }
+    
 
     public int GetWhiteDwarf()
     {
@@ -133,16 +124,9 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
         return playerTwoBlackHole.Value;
     }
 
-    public void SetBlackDwarf(int newValue)
-    {
-        SetBlackDwarfServerRpc(newValue);
-    }
+   
 
-    [ServerRpc(RequireOwnership =false)]
-    private void SetBlackDwarfServerRpc(int newValue)
-    {
-        playerTwoBlackDwarf.Value = newValue;
-    }
+    
 
     public void SetWhiteDwarf(int newValue)
     {
@@ -177,10 +161,7 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
         playerTwoBlackHole.Value = newValue;
     }
 
-    public void UpdateBlackDwarfUIPlayerOne()
-    {
-        OnSetOpponentBlackDwarf?.Invoke(this, EventArgs.Empty);
-    }
+    
 
     public void UpdateWhiteDwarfUIPlayerOne()
     {
@@ -197,10 +178,7 @@ public class PlayerTwo : NetworkBehaviour, IPlayer
         OnSetOpponentBlackHole?.Invoke(this, EventArgs.Empty);
     }
 
-    public void UpdateBlackDwarfUIPlayerTwo()
-    {
-        OnSetMyBlackDwarf?.Invoke(this, EventArgs.Empty);
-    }
+    
 
     public void UpdateWhiteDwarfUIPlayerTwo()
     {
